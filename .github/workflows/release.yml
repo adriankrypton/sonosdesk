@@ -89,10 +89,13 @@ jobs:
             ForEach-Object { "{0}  {1}" -f $_.Hash.ToLowerInvariant(), (Split-Path $_.Path -Leaf) } |
             Set-Content artifacts/SHA256SUMS.txt -Encoding utf8
 
-          # Release notes: the section of this version in CHANGELOG.md.
+          # Release notes: docs/release-notes/<version>.md, otherwise the section of this version in CHANGELOG.md.
+          $notes = "docs/release-notes/$version.md"
           $lines = Get-Content CHANGELOG.md -Encoding utf8
           $start = [Array]::FindIndex($lines, [Predicate[string]] { param($l) $l -match "^## \[?v?$([regex]::Escape($version))\]?" })
-          if ($start -ge 0) {
+          if (Test-Path $notes) {
+            Copy-Item $notes artifacts/release-notes.md
+          } elseif ($start -ge 0) {
             $end = [Array]::FindIndex($lines, $start + 1, [Predicate[string]] { param($l) $l -match '^## ' })
             if ($end -lt 0) { $end = $lines.Length }
             $lines[($start + 1)..($end - 1)] | Set-Content artifacts/release-notes.md -Encoding utf8
@@ -110,7 +113,18 @@ jobs:
             "artifacts/SonosDesk-$version-win-x64-portable.exe",
             "artifacts/SonosDesk-$version-win-x64-portable.zip",
             'artifacts/SHA256SUMS.txt')
+          $hasNotes = Test-Path artifacts/release-notes.md
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            # Running again for an existing version refreshes its files and notes.
+            gh release upload $tag @files --clobber
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if ($hasNotes) { gh release edit $tag --title "SonosDesk $tag" --notes-file artifacts/release-notes.md }
+            exit $LASTEXITCODE
+          }
+
           $flags = @('--title', "SonosDesk $tag", '--target', $env:GITHUB_SHA)
-          if (Test-Path artifacts/release-notes.md) { $flags += @('--notes-file', 'artifacts/release-notes.md') } else { $flags += '--generate-notes' }
+          if ($hasNotes) { $flags += @('--notes-file', 'artifacts/release-notes.md') } else { $flags += '--generate-notes' }
           if ('${{ steps.version.outputs.prerelease }}' -eq 'true') { $flags += '--prerelease' }
           gh release create $tag @files @flags
