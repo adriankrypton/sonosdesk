@@ -228,7 +228,7 @@ public class DeviceDescriptionClientTests
         using var http = new GuardedHttpClient(handler, uri => DeviceUrlValidator.ValidateDeviceUrl(uri), TimeSpan.FromSeconds(5), NullLogger.Instance);
         var client = new DeviceDescriptionClient(http, NullLogger<DeviceDescriptionClient>.Instance);
 
-        var description = await client.GetDescriptionAsync(new Uri("http://192.168.178.226:1400/xml/device_description.xml"));
+        var description = await client.GetDescriptionAsync(new Uri("http://192.168.1.50:1400/xml/device_description.xml"));
 
         Assert.Equal(2, attempts);
         Assert.Equal("Medienzimmer", description.RoomName);
@@ -241,7 +241,7 @@ public class DeviceDescriptionClientTests
         using var http = new GuardedHttpClient(handler, uri => DeviceUrlValidator.ValidateDeviceUrl(uri), TimeSpan.FromSeconds(5), NullLogger.Instance);
         var client = new DeviceDescriptionClient(http, NullLogger<DeviceDescriptionClient>.Instance);
 
-        var error = await Assert.ThrowsAsync<SonosException>(() => client.GetDescriptionAsync(new Uri("http://192.168.178.226:1400/xml/device_description.xml")));
+        var error = await Assert.ThrowsAsync<SonosException>(() => client.GetDescriptionAsync(new Uri("http://192.168.1.50:1400/xml/device_description.xml")));
 
         Assert.Equal(404, error.ErrorCode);
         Assert.Single(handler.Requests);

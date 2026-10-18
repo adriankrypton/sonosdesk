@@ -279,7 +279,7 @@ public class LocalRadioTests
     public void Real_tunein_state_shows_station_not_stream_file()
     {
         // Values as returned by a Sonos One (S2 97.2) playing a TuneIn station.
-        var device = Samples.Device("RINCON_A", "Medienzimmer", "192.168.178.226");
+        var device = Samples.Device("RINCON_A", "Medienzimmer", "192.168.1.50");
         var trackMeta = """
             <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
             <item id="-1" parentID="-1"><upnp:class>object.item</upnp:class><r:streamContent>Infos und Playlist auch im Netz: 1LIVEDIGGI.de</r:streamContent>

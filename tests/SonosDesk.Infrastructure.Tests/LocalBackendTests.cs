@@ -233,7 +233,7 @@ public class LocalBackendTests
     public void Spotify_connect_is_recognized_with_track_skip_and_seek()
     {
         var device = Samples.Device(LivingId, "Wohnzimmer", "192.168.1.10");
-        const string vli = "x-sonos-vli:RINCON_7828CACADB7A01400:2,spotify:38abe8ebb809ddbc5687c7da0e03aa49";
+        const string vli = "x-sonos-vli:RINCON_000E58A1B2C301400:2,spotify:38abe8ebb809ddbc5687c7da0e03aa49";
         var trackMeta = """
             <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
             <item id="-1" parentID="-1"><upnp:albumArtURI>https://i.scdn.co/image/ab67616d0000b273</upnp:albumArtURI><dc:title>Verona</dc:title><dc:creator>Muse</dc:creator><upnp:album>Will Of The People</upnp:album></item></DIDL-Lite>

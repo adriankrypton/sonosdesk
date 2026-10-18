@@ -12,7 +12,7 @@ namespace SonosDesk.Infrastructure.Tests;
 
 internal static class Samples
 {
-    public static string DeviceDescription(string id = "RINCON_7828CACADB7A01400", string room = "Medienzimmer", string host = "192.168.178.226") => $"""
+    public static string DeviceDescription(string id = "RINCON_000E58A1B2C301400", string room = "Medienzimmer", string host = "192.168.1.50") => $"""
         <?xml version="1.0" encoding="utf-8" ?>
         <root xmlns="urn:schemas-upnp-org:device-1-0">
           <specVersion><major>1</major><minor>0</minor></specVersion>
@@ -23,9 +23,9 @@ internal static class Samples
             <modelNumber>S13</modelNumber>
             <modelName>Sonos One</modelName>
             <softwareVersion>97.2-81220</softwareVersion>
-            <serialNum>78-28-CA-CA-DB-7A:E</serialNum>
+            <serialNum>00-0E-58-A1-B2-C3:E</serialNum>
             <hardwareVersion>1.21.1.8-2.2</hardwareVersion>
-            <MACAddress>78:28:CA:CA:DB:7A</MACAddress>
+            <MACAddress>00:0E:58:A1:B2:C3</MACAddress>
             <displayVersion>27.1</displayVersion>
             <UDN>uuid:{id}</UDN>
             <roomName>{room}</roomName>

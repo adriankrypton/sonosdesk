@@ -10,7 +10,7 @@ public class NetworkAddressPolicyTests
     [InlineData("172.16.0.1", true)]
     [InlineData("172.31.255.255", true)]
     [InlineData("172.32.0.1", false)]
-    [InlineData("192.168.178.226", true)]
+    [InlineData("192.168.1.50", true)]
     [InlineData("169.254.10.10", true)]
     [InlineData("169.254.169.254", false)]
     [InlineData("8.8.8.8", false)]
@@ -44,7 +44,7 @@ public class NetworkAddressPolicyTests
 public class DeviceUrlValidatorTests
 {
     [Theory]
-    [InlineData("http://192.168.178.226:1400/xml/device_description.xml")]
+    [InlineData("http://192.168.1.50:1400/xml/device_description.xml")]
     [InlineData("https://10.0.0.5:1443/xml/device_description.xml")]
     [InlineData("http://[fd00::5]:1400/xml/device_description.xml")]
     public void Accepts_local_sonos_urls(string url)

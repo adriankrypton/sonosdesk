@@ -6,26 +6,26 @@ namespace SonosDesk.Infrastructure.Tests;
 
 public class DeviceDescriptionParserTests
 {
-    private static readonly Uri Location = new("http://192.168.178.226:1400/xml/device_description.xml");
+    private static readonly Uri Location = new("http://192.168.1.50:1400/xml/device_description.xml");
 
     [Fact]
     public void Parses_sonos_description_with_embedded_devices()
     {
         var description = DeviceDescriptionParser.Parse(Samples.DeviceDescription(), Location);
 
-        Assert.Equal("RINCON_7828CACADB7A01400", description.Id);
+        Assert.Equal("RINCON_000E58A1B2C301400", description.Id);
         Assert.Equal("Medienzimmer", description.RoomName);
         Assert.Equal("Sonos One", description.ModelName);
         Assert.Equal("S13", description.ModelNumber);
         Assert.Equal("97.2-81220", description.SoftwareVersion);
         Assert.Equal("27.1", description.DisplayVersion);
         Assert.Equal("1.21.1.8-2.2", description.HardwareVersion);
-        Assert.Equal("78:28:CA:CA:DB:7A", description.MacAddress);
+        Assert.Equal("00:0E:58:A1:B2:C3", description.MacAddress);
         Assert.True(description.IsSonos);
 
         var av = description.FindService(SonosServiceTypes.AVTransport);
         Assert.NotNull(av);
-        Assert.Equal(new Uri("http://192.168.178.226:1400/MediaRenderer/AVTransport/Control"), av.ControlUrl);
+        Assert.Equal(new Uri("http://192.168.1.50:1400/MediaRenderer/AVTransport/Control"), av.ControlUrl);
         Assert.NotNull(description.FindService(SonosServiceTypes.ContentDirectory));
         Assert.NotNull(description.FindService(SonosServiceTypes.ZoneGroupTopology));
     }
@@ -48,7 +48,7 @@ public class DeviceDescriptionParserTests
 
         var description = DeviceDescriptionParser.Parse(xml, Location);
 
-        Assert.Equal("192.168.178.226", description.FindService(SonosServiceTypes.AVTransport)!.ControlUrl.Host);
+        Assert.Equal("192.168.1.50", description.FindService(SonosServiceTypes.AVTransport)!.ControlUrl.Host);
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class DidlAndValueParserTests
 
 public class FavoritesParserTests
 {
-    private static readonly Uri Base = new("http://192.168.178.226:1400");
+    private static readonly Uri Base = new("http://192.168.1.50:1400");
 
     private const string Result = """
         <DIDL-Lite xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/" xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/" xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/">
@@ -286,7 +286,7 @@ public class FavoritesParserTests
 
         var playlist = favorites[1];
         Assert.True(playlist.RequiresQueue);
-        Assert.Equal(new Uri("http://192.168.178.226:1400/getaa?s=1&u=abc"), playlist.AlbumArtUri);
+        Assert.Equal(new Uri("http://192.168.1.50:1400/getaa?s=1&u=abc"), playlist.AlbumArtUri);
     }
 
     [Theory]

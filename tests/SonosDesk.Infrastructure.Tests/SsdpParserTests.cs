@@ -6,7 +6,7 @@ namespace SonosDesk.Infrastructure.Tests;
 
 public class SsdpParserTests
 {
-    private static readonly IPEndPoint Remote = new(IPAddress.Parse("192.168.178.226"), 1900);
+    private static readonly IPEndPoint Remote = new(IPAddress.Parse("192.168.1.50"), 1900);
 
     private static SsdpMessage? Parse(string text) =>
         SsdpParser.TryParse(Encoding.UTF8.GetBytes(text), Remote, out var message) ? message : null;
@@ -14,12 +14,12 @@ public class SsdpParserTests
     [Fact]
     public void Parses_search_response_headers()
     {
-        var message = Parse(Samples.SsdpResponse("RINCON_7828CACADB7A01400", "http://192.168.178.226:1400/xml/device_description.xml"));
+        var message = Parse(Samples.SsdpResponse("RINCON_000E58A1B2C301400", "http://192.168.1.50:1400/xml/device_description.xml"));
 
         Assert.NotNull(message);
         Assert.Equal(SsdpMessageKind.SearchResponse, message.Kind);
-        Assert.Equal("RINCON_7828CACADB7A01400", message.DeviceId);
-        Assert.Equal(new Uri("http://192.168.178.226:1400/xml/device_description.xml"), message.LocationUri);
+        Assert.Equal("RINCON_000E58A1B2C301400", message.DeviceId);
+        Assert.Equal(new Uri("http://192.168.1.50:1400/xml/device_description.xml"), message.LocationUri);
         Assert.Equal("urn:schemas-upnp-org:device:ZonePlayer:1", message.Target);
         Assert.Contains("Sonos", message.Server);
         Assert.Equal(TimeSpan.FromMinutes(30), message.MaxAge);
@@ -120,8 +120,8 @@ public class SsdpParserTests
     }
 
     [Theory]
-    [InlineData("uuid:RINCON_7828CACADB7A01400_MR::urn:schemas-upnp-org:device:MediaRenderer:1", "RINCON_7828CACADB7A01400")]
-    [InlineData("uuid:RINCON_7828CACADB7A01400_MS::urn:schemas-upnp-org:device:MediaServer:1", "RINCON_7828CACADB7A01400")]
+    [InlineData("uuid:RINCON_000E58A1B2C301400_MR::urn:schemas-upnp-org:device:MediaRenderer:1", "RINCON_000E58A1B2C301400")]
+    [InlineData("uuid:RINCON_000E58A1B2C301400_MS::urn:schemas-upnp-org:device:MediaServer:1", "RINCON_000E58A1B2C301400")]
     [InlineData("uuid:RINCON_ABC", "RINCON_ABC")]
     [InlineData("uuid:bad id!::x", null)]
     [InlineData("RINCON_ABC", null)]
