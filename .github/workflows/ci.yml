@@ -50,7 +50,7 @@ jobs:
         run: ./tools/build-installer.ps1 -Iscc "$env:RUNNER_TEMP\inno\ISCC.exe"
 
       - name: Upload app and installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SonosDesk-win-x64
           path: |
