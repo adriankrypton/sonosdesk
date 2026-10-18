@@ -1,0 +1,184 @@
+<Window x:Class="SonosDesk.App.Views.TrayFlyoutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SonosDesk.App.ViewModels"
+        xmlns:views="clr-namespace:SonosDesk.App.Views"
+        xmlns:l="clr-namespace:SonosDesk.App.Localization"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        Title="{l:T flyout.title}"
+        Width="372" SizeToContent="Height"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+        BorderBrush="{DynamicResource SurfaceStrokeColorFlyoutBrush}" BorderThickness="1"
+        UseLayoutRounding="True">
+
+    <Window.InputBindings>
+        <KeyBinding Key="Space" Modifiers="Control" Command="{Binding SelectedGroup.PlayPauseCommand}" />
+        <KeyBinding Key="Right" Modifiers="Control" Command="{Binding SelectedGroup.NextCommand}" />
+        <KeyBinding Key="Left" Modifiers="Control" Command="{Binding SelectedGroup.PreviousCommand}" />
+        <KeyBinding Key="Up" Modifiers="Control" Command="{Binding VolumeUpCommand}" />
+        <KeyBinding Key="Down" Modifiers="Control" Command="{Binding VolumeDownCommand}" />
+    </Window.InputBindings>
+
+    <StackPanel Margin="16,12,16,12">
+        <!-- Header -->
+        <Grid Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/Resources/AppIcon.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="SonosDesk" Margin="8,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource IconButtonStyle}" Width="32" Height="32" FontSize="14" Content="&#xE72C;"
+                        Command="{Binding RescanCommand}" ToolTip="{l:T flyout.rescan}" AutomationProperties.Name="{l:T flyout.rescan}" />
+                <Button Style="{StaticResource IconButtonStyle}" Width="32" Height="32" FontSize="14" Content="&#xE713;"
+                        Command="{Binding OpenSettingsWindowCommand}" ToolTip="{l:T flyout.settings}" AutomationProperties.Name="{l:T flyout.settings}" />
+                <Button Style="{StaticResource IconButtonStyle}" Width="32" Height="32" FontSize="14" Content="&#xE8A7;"
+                        Command="{Binding OpenMainWindowCommand}" ToolTip="{l:T flyout.open}" AutomationProperties.Name="{l:T flyout.open_main}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Message -->
+        <Border Margin="0,0,0,10" DataContext="{Binding Notifications}" Style="{StaticResource InfoBarStyle}"
+                Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource InfoBarIconStyle}" />
+                <TextBlock Grid.Column="1" Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" VerticalAlignment="Center" />
+                <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Width="24" Height="24" FontSize="9"
+                        Content="&#xE8BB;" Command="{Binding DismissCommand}" AutomationProperties.Name="{l:T flyout.dismiss}" />
+            </Grid>
+        </Border>
+
+        <!-- Empty state -->
+        <StackPanel Margin="0,8,0,12" Visibility="{Binding HasGroups, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+            <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,12"
+                         Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock Text="{Binding EmptyText}" TextWrapping="Wrap" Style="{StaticResource SecondaryTextStyle}" />
+        </StackPanel>
+
+        <StackPanel Visibility="{Binding HasGroups, Converter={StaticResource BoolToVisibility}}">
+            <!-- Room picker -->
+            <ComboBox ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="Name"
+                      HorizontalAlignment="Stretch" AutomationProperties.Name="{l:T flyout.active_room}" />
+
+            <!-- Now playing -->
+            <Border Style="{StaticResource CardStyle}" Margin="0,10,0,0" Padding="12" DataContext="{Binding SelectedGroup}"
+                    d:DataContext="{d:DesignInstance Type=vm:GroupViewModel}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="72" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ContentPresenter Width="72" Height="72" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}" />
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding NowPlayingHint}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis"
+                                       Visibility="{Binding NowPlayingHint, Converter={StaticResource NullToVisibility}}" />
+                            <TextBlock Text="{Binding DisplayTitle, TargetNullValue={l:T flyout.nothing_playing}}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding DisplayArtist}" Style="{StaticResource SecondaryTextStyle}"
+                                       Visibility="{Binding DisplayArtist, Converter={StaticResource NullToVisibility}}" />
+                            <TextBlock Text="{Binding SourceText}" FontSize="11" Margin="0,2,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Error}" FontSize="11" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap"
+                                       Visibility="{Binding Error, Converter={StaticResource NullToVisibility}}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                        <Button Style="{StaticResource IconButtonStyle}" Content="&#xE892;" Width="40" Height="40" Command="{Binding PreviousCommand}"
+                                IsEnabled="{Binding CanSkipPrevious}" ToolTip="{l:T flyout.previous}" AutomationProperties.Name="{l:T flyout.previous}" />
+                        <Grid Width="54" Height="54" Margin="12,0">
+                            <Button Style="{StaticResource PlayButtonStyle}" Width="46" Height="46" FontSize="18"
+                                    Content="{Binding IsPlaying, Converter={StaticResource PlayPauseGlyph}}" Command="{Binding PlayPauseCommand}"
+                                    AutomationProperties.Name="{Binding IsPlaying, Converter={StaticResource PlayPauseText}}" />
+                            <views:BusySpinner Thickness="2.5" Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                               Visibility="{Binding IsBuffering, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                        <Button Style="{StaticResource IconButtonStyle}" Content="&#xE893;" Width="40" Height="40" Command="{Binding NextCommand}"
+                                IsEnabled="{Binding CanSkipNext}" ToolTip="{l:T flyout.next}" AutomationProperties.Name="{l:T flyout.next}" />
+                    </StackPanel>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="32" />
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource IconButtonStyle}" Width="32" Height="32" Content="{Binding IsMuted, Converter={StaticResource MuteGlyph}}"
+                                Command="{Binding ToggleMuteCommand}" AutomationProperties.Name="{l:T flyout.mute}" />
+                        <Slider Grid.Column="1" Margin="6,0" VerticalAlignment="Center" Minimum="0" Maximum="100" IsMoveToPointEnabled="True"
+                                SmallChange="1" LargeChange="5" Value="{Binding Volume, Mode=TwoWay}"
+                                IsEnabled="{Binding IsVolumeFixed, Converter={StaticResource InverseBool}}" AutomationProperties.Name="{l:T flyout.volume}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Volume}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource SecondaryTextStyle}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Favorites -->
+            <StackPanel Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{l:T flyout.favorites}" FontSize="12" Margin="0,4,0,6" Style="{StaticResource SecondaryTextStyle}" />
+                <ComboBox x:Name="FavoritePicker" ItemsSource="{Binding Favorites}" DisplayMemberPath="Title" Margin="0,0,0,8"
+                          AutomationProperties.Name="{l:T flyout.play_favorite}" SelectionChanged="OnFavoritePicked" />
+            </StackPanel>
+
+            <!-- Volume profiles -->
+            <TextBlock Text="{l:T flyout.volume_profiles}" FontSize="12" Margin="0,4,0,6" Style="{StaticResource SecondaryTextStyle}"
+                       Visibility="{Binding VolumeProfiles.Count, Converter={StaticResource NullToVisibility}}" />
+            <ItemsControl ItemsSource="{Binding VolumeProfiles}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Margin="0,0,6,6" Padding="10,4" Content="{Binding Name}"
+                                Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}">
+                            <Button.ToolTip>
+                                <TextBlock Text="{Binding ActiveRoomVolume, StringFormat={l:T flyout.profile_volume}}" />
+                            </Button.ToolTip>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Quick actions -->
+            <TextBlock Text="{l:T flyout.quick_actions}" FontSize="12" Margin="0,4,0,6" Style="{StaticResource SecondaryTextStyle}" />
+            <ItemsControl ItemsSource="{Binding QuickActions}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Margin="0,0,6,6" Padding="10,4" Content="{Binding Name}"
+                                Command="{Binding DataContext.RunQuickActionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Footer -->
+        <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Margin="-16,8,-16,0" Padding="16,10,16,0">
+            <Grid>
+                <TextBlock Text="{Binding DiscoveryText}" FontSize="11" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" MaxWidth="220" />
+                <Button HorizontalAlignment="Right" Padding="12,4" Command="{Binding ExitCommand}" ToolTip="{l:T flyout.exit_tooltip}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" />
+                        <TextBlock Text="{l:T flyout.exit}" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </StackPanel>
+</Window>

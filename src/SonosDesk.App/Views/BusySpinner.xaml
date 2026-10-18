@@ -1,0 +1,15 @@
+<UserControl x:Class="SonosDesk.App.Views.BusySpinner"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root" IsHitTestVisible="False" Focusable="False"
+             AutomationProperties.Name="Wird geladen">
+    <!-- A quarter arc rotating around the center (Windows 11 ProgressRing look). -->
+    <Ellipse x:Name="Arc" RenderTransformOrigin="0.5,0.5"
+             Stroke="{Binding Foreground, ElementName=Root}"
+             StrokeThickness="{Binding Thickness, ElementName=Root}"
+             StrokeDashCap="Round">
+        <Ellipse.RenderTransform>
+            <RotateTransform x:Name="Rotation" />
+        </Ellipse.RenderTransform>
+    </Ellipse>
+</UserControl>

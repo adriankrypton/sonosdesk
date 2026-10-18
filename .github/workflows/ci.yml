@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Inno Setup 7.1.0 (installer compiler), pinned by version and SHA-256.
+  INNO_URL: https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe
+  INNO_SHA256: 0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f
+
+jobs:
+  build-and-test:
+    # WPF and WinForms require a Windows runner.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore SonosDesk.sln
+
+      - name: Build
+        run: dotnet build SonosDesk.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --solution SonosDesk.sln --configuration Release --no-build
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: ./tools/install-inno-setup.ps1 -Url $env:INNO_URL -Sha256 $env:INNO_SHA256 -Destination "$env:RUNNER_TEMP\inno"
+
+      - name: Publish and build installer
+        shell: pwsh
+        run: ./tools/build-installer.ps1 -Iscc "$env:RUNNER_TEMP\inno\ISCC.exe"
+
+      - name: Upload app and installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: SonosDesk-win-x64
+          path: |
+            artifacts/SonosDesk-win-x64/SonosDesk.exe
+            artifacts/installer/*.exe
+          retention-days: 14

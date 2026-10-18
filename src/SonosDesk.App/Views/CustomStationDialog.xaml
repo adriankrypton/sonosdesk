@@ -1,0 +1,33 @@
+<Window x:Class="SonosDesk.App.Views.CustomStationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:SonosDesk.App.Localization"
+        Title="{l:T dlg.station.title}"
+        Width="480" SizeToContent="Height"
+        ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=NameBox}">
+    <StackPanel Margin="24,20,24,20">
+        <TextBlock Text="{l:T dlg.station.header}" Style="{DynamicResource SubtitleTextBlockStyle}" FontSize="18" />
+        <TextBlock Margin="0,8,0,16" TextWrapping="Wrap" Style="{StaticResource SettingHintStyle}" FontSize="13"
+                   Text="{l:T dlg.station.hint}" />
+
+        <TextBlock Text="{l:T dlg.station.name}" Margin="0,0,0,4" />
+        <TextBox x:Name="NameBox" TextChanged="OnInputChanged" AutomationProperties.Name="{l:T dlg.station.name_a11y}" />
+
+        <TextBlock Text="{l:T dlg.station.url}" Margin="0,12,0,4" />
+        <TextBox x:Name="UrlBox" TextChanged="OnInputChanged" AutomationProperties.Name="{l:T dlg.station.url}"
+                 ToolTip="{l:T dlg.station.url_tooltip}" />
+
+        <TextBlock Text="{l:T dlg.station.folder}" Margin="0,12,0,4" />
+        <ComboBox x:Name="FolderBox" IsEditable="True" AutomationProperties.Name="{l:T dlg.station.folder_a11y}" />
+
+        <TextBlock x:Name="ValidationText" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="{l:T dlg.station.cancel}" MinWidth="100" IsCancel="True" />
+            <Button x:Name="AddButton" Content="{l:T dlg.station.add}" MinWidth="120" Margin="8,0,0,0" IsDefault="True" IsEnabled="False"
+                    Style="{DynamicResource AccentButtonStyle}" Click="OnAdd" />
+        </StackPanel>
+    </StackPanel>
+</Window>

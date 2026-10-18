@@ -1,0 +1,498 @@
+<UserControl x:Class="SonosDesk.App.Views.NowPlayingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:SonosDesk.App.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SonosDesk.App.ViewModels"
+             xmlns:views="clr-namespace:SonosDesk.App.Views"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:MainViewModel}">
+    <Grid>
+        <!-- No room selected yet -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+            <TextBlock Text="&#xE7F5;" FontFamily="{StaticResource IconFont}" FontSize="48" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            <TextBlock Text="{l:T np.no_rooms}" Style="{DynamicResource SubtitleTextBlockStyle}" HorizontalAlignment="Center" Margin="0,16,0,8" />
+            <TextBlock Text="{Binding EmptyText}" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource SecondaryTextStyle}" />
+            <Button Content="{l:T np.rescan}" HorizontalAlignment="Center" Margin="0,20,0,0" Style="{DynamicResource AccentButtonStyle}"
+                    Command="{Binding RescanCommand}" />
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Margin="32,24,32,32" DataContext="{Binding SelectedGroup}" d:DataContext="{d:DesignInstance Type=vm:GroupViewModel}">
+                <!-- Single speaker of a group selected -->
+                <Border Margin="0,0,0,20" Padding="14,10" CornerRadius="8" BorderThickness="1"
+                        BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" Background="{DynamicResource SystemFillColorAttentionBackgroundBrush}"
+                        DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Visibility="{Binding HasSingleRoomTarget, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE7F5;" FontFamily="{StaticResource IconFont}" FontSize="16" VerticalAlignment="Center" Margin="0,0,12,0"
+                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TargetRoomName, StringFormat={l:T np.only_room_selected}}" FontWeight="SemiBold" />
+                            <TextBlock TextWrapping="Wrap" FontSize="12" Style="{StaticResource SettingHintStyle}"
+                                       Text="{l:T np.single_room_hint}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0">
+                            <Button Content="{l:T np.play_alone_now}" Padding="10,4" Command="{Binding DetachTargetRoomCommand}" />
+                            <Button Content="{l:T np.whole_group}" Padding="10,4" Margin="6,0,0,0" Command="{Binding ShowWholeGroupCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Cards of the start page; reorder via drag & drop on the grip, order is saved. -->
+                <StackPanel x:Name="Sections" AllowDrop="True" DragOver="OnSectionsDragOver" Drop="OnSectionsDrop">
+                <Grid Tag="nowplaying" Margin="0,0,0,16">
+                    <!-- Now playing -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <ContentPresenter Width="240" Height="240" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}">
+                            <ContentPresenter.Effect>
+                                <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.25" />
+                            </ContentPresenter.Effect>
+                        </ContentPresenter>
+
+                        <StackPanel Grid.Column="1" Margin="32,4,0,0" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Style="{DynamicResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                <Border Margin="10,0,0,0" Padding="8,2" CornerRadius="10" VerticalAlignment="Center"
+                                        Background="{DynamicResource SubtleFillColorSecondaryBrush}" ToolTip="{Binding RoomsText}"
+                                        Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE71B;" FontFamily="{StaticResource IconFont}" FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0" />
+                                        <TextBlock Text="{Binding GroupBadge}" FontSize="12" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                        Visibility="{Binding IsBuffering, Converter={StaticResource BoolToVisibility}}">
+                                <views:BusySpinner Width="12" Height="12" Thickness="2" Margin="0,0,6,0"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                <TextBlock Text="{l:T np.buffering}" FontSize="12" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                        Visibility="{Binding NowPlayingHint, Converter={StaticResource NullToVisibility}}">
+                                <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding NowPlayingHint}" FontSize="12" Style="{StaticResource SecondaryTextStyle}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding DisplayTitle, TargetNullValue={l:T np.nothing_playing}}" Margin="0,4,0,0"
+                                       Style="{DynamicResource TitleTextBlockStyle}" TextWrapping="Wrap" MaxHeight="80" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding DisplayArtist}" Margin="0,6,0,0" FontSize="16" Style="{StaticResource SecondaryTextStyle}"
+                                       Visibility="{Binding DisplayArtist, Converter={StaticResource NullToVisibility}}" />
+                            <TextBlock Text="{Binding Album}" Margin="0,2,0,0" Style="{StaticResource SecondaryTextStyle}"
+                                       Visibility="{Binding Album, Converter={StaticResource NullToVisibility}}" />
+
+                            <Border HorizontalAlignment="Left" Margin="0,12,0,0" Padding="10,3" CornerRadius="10"
+                                    Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                    Visibility="{Binding SourceText, Converter={StaticResource NullToVisibility}}">
+                                <TextBlock Text="{Binding SourceText}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </Border>
+
+                            <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource SystemFillColorCriticalBrush}" TextWrapping="Wrap"
+                                       Text="{Binding Error}" Visibility="{Binding Error, Converter={StaticResource NullToVisibility}}" />
+
+                            <!-- Progress -->
+                            <Grid Margin="0,20,0,0" Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding PositionText}" FontSize="12" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                                <Grid Grid.Column="1" Margin="10,0">
+                                    <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Center"
+                                                 AutomationProperties.Name="{l:T np.progress}"
+                                                 Visibility="{Binding CanSeek, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                    <Slider Minimum="0" Maximum="{Binding DurationSeconds}" Value="{Binding SeekSeconds, Mode=TwoWay}" VerticalAlignment="Center"
+                                            IsMoveToPointEnabled="True" SmallChange="5" LargeChange="15"
+                                            AutomationProperties.Name="{l:T np.seek}" ToolTip="{l:T np.seek_tooltip}"
+                                            Visibility="{Binding CanSeek, Converter={StaticResource BoolToVisibility}}" />
+                                </Grid>
+                                <TextBlock Grid.Column="2" Text="{Binding DurationText}" FontSize="12" Style="{StaticResource SecondaryTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Transport -->
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Style="{StaticResource IconButtonStyle}" Content="&#xE8B1;" Tag="{Binding Shuffle}"
+                                        Command="{Binding ToggleShuffleCommand}" IsEnabled="{Binding CanChangePlayMode}"
+                                        ToolTip="{l:T np.shuffle}" AutomationProperties.Name="{l:T np.shuffle}" />
+                                <Button Style="{StaticResource IconButtonStyle}" Content="&#xE892;" Margin="12,0,0,0" FontSize="18" Width="44" Height="44"
+                                        Command="{Binding PreviousCommand}" IsEnabled="{Binding CanSkipPrevious}"
+                                        ToolTip="{l:T np.previous_tooltip}" AutomationProperties.Name="{l:T np.previous}" />
+                                <Grid Margin="12,0" Width="66" Height="66">
+                                    <Button Style="{StaticResource PlayButtonStyle}"
+                                            Content="{Binding IsPlaying, Converter={StaticResource PlayPauseGlyph}}"
+                                            Command="{Binding PlayPauseCommand}"
+                                            ToolTip="{l:T np.play_pause_tooltip}"
+                                            AutomationProperties.Name="{Binding IsPlaying, Converter={StaticResource PlayPauseText}}" />
+                                    <views:BusySpinner Thickness="3" Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                                       Visibility="{Binding IsBuffering, Converter={StaticResource BoolToVisibility}}" />
+                                </Grid>
+                                <Button Style="{StaticResource IconButtonStyle}" Content="&#xE893;" FontSize="18" Width="44" Height="44"
+                                        Command="{Binding NextCommand}" IsEnabled="{Binding CanSkipNext}"
+                                        ToolTip="{l:T np.next_tooltip}" AutomationProperties.Name="{l:T np.next}" />
+                                <Button Style="{StaticResource IconButtonStyle}" Margin="12,0,0,0"
+                                        Content="{Binding Repeat, Converter={StaticResource RepeatGlyph}}"
+                                        Tag="{Binding Repeat, Converter={StaticResource RepeatActive}}"
+                                        Command="{Binding CycleRepeatCommand}" IsEnabled="{Binding CanChangePlayMode}"
+                                        ToolTip="{l:T np.repeat_tooltip}" AutomationProperties.Name="{l:T np.repeat}" />
+                                <Button Style="{StaticResource IconButtonStyle}" Margin="4,0,0,0" Content="&#xE8AB;"
+                                        Tag="{Binding IsCrossfadeOn}" Command="{Binding ToggleCrossfadeCommand}"
+                                        Visibility="{Binding HasCrossfade, Converter={StaticResource BoolToVisibility}}"
+                                        ToolTip="{l:T np.crossfade_tooltip}" AutomationProperties.Name="{l:T np.crossfade}" />
+                                <Button Style="{StaticResource IconButtonStyle}" Width="Auto" MinWidth="36" Padding="8,0" Margin="4,0,0,0"
+                                        Tag="{Binding HasSleepTimer}" Click="OnOpenMenuClick"
+                                        Visibility="{Binding SupportsSleepTimer, Converter={StaticResource BoolToVisibility}}"
+                                        AutomationProperties.Name="{l:T np.sleep_timer}">
+                                    <Button.ToolTip>
+                                        <TextBlock Text="{Binding SleepTimerText}" />
+                                    </Button.ToolTip>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE708;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding SleepTimerShortText}" FontFamily="Segoe UI" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                   Visibility="{Binding SleepTimerShortText, Converter={StaticResource NullToVisibility}}" />
+                                    </StackPanel>
+                                    <Button.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{Binding SleepTimerText}" IsEnabled="False" />
+                                            <Separator />
+                                            <MenuItem Header="15" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="15" />
+                                            <MenuItem Header="30" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="30" />
+                                            <MenuItem Header="45" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="45" />
+                                            <MenuItem Header="60" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="60" />
+                                            <MenuItem Header="90" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="90" />
+                                            <MenuItem Header="120" HeaderStringFormat="{l:T np.sleep_minutes}" Command="{Binding SetSleepTimerCommand}" CommandParameter="120" />
+                                            <Separator />
+                                            <MenuItem Header="{l:T np.sleep_off}" Command="{Binding SetSleepTimerCommand}" CommandParameter="0"
+                                                      IsEnabled="{Binding HasSleepTimer}" />
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Volume -->
+                            <Grid Margin="0,20,0,0" MaxWidth="420" HorizontalAlignment="Left" Width="420">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="40" />
+                                </Grid.ColumnDefinitions>
+                                <Button Style="{StaticResource IconButtonStyle}" Content="{Binding IsMuted, Converter={StaticResource MuteGlyph}}"
+                                        Command="{Binding ToggleMuteCommand}" ToolTip="{l:T np.mute_tooltip}" AutomationProperties.Name="{l:T np.mute}" />
+                                <Slider Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Minimum="0" Maximum="100"
+                                        SmallChange="1" LargeChange="5" IsMoveToPointEnabled="True"
+                                        Value="{Binding Volume, Mode=TwoWay}" IsEnabled="{Binding IsVolumeFixed, Converter={StaticResource InverseBool}}"
+                                        AutomationProperties.Name="{l:T np.volume}" ToolTip="{l:T np.volume_tooltip}" />
+                                <TextBlock Grid.Column="2" Text="{Binding Volume}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                           Style="{StaticResource SecondaryTextStyle}" />
+                            </Grid>
+                            <TextBlock Text="{l:T np.fixed_volume}" Style="{StaticResource SettingHintStyle}"
+                                       Visibility="{Binding IsVolumeFixed, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                <Grid Tag="favorites" Margin="0,0,0,16" Visibility="{Binding Visibility, ElementName=FavoritesCard}">
+                    <!-- Favorites: play on this room/group -->
+                    <Border x:Name="FavoritesCard" Style="{StaticResource CardStyle}" Margin="0"
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Visibility="{Binding SupportsFavorites, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{l:T np.favorites}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,2" />
+                                    <TextBlock Text="{Binding SelectedGroup.Name, StringFormat={l:T np.favorites_hint}}" Style="{StaticResource SettingHintStyle}" />
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;"
+                                        Command="{Binding LoadFavoritesCommand}" ToolTip="{l:T np.reload_favorites}" AutomationProperties.Name="{l:T np.reload_favorites}" />
+                            </Grid>
+                            <TextBlock Text="{l:T np.no_favorites}"
+                                       Style="{StaticResource SettingHintStyle}"
+                                       Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                            <ItemsControl ItemsSource="{Binding Favorites}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:FavoriteViewModel}">
+                                        <Button Style="{StaticResource IconButtonStyle}" Width="112" Height="Auto" Margin="0,0,8,8" Padding="4"
+                                                FontSize="12"
+                                                Command="{Binding DataContext.PlayFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}" ToolTip="{Binding Description}" AutomationProperties.Name="{Binding Title}">
+                                            <StackPanel Margin="4" Width="96">
+                                                <ContentPresenter Width="96" Height="96" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}" />
+                                                <TextBlock Text="{Binding Title}" Margin="0,6,0,0" TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis"
+                                                           FontFamily="Segoe UI" TextAlignment="Center" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                <Grid Tag="members" Margin="0,0,0,16" Visibility="{Binding Visibility, ElementName=MembersCard}">
+                    <!-- Room volumes inside a group -->
+                    <Border x:Name="MembersCard" Style="{StaticResource CardStyle}" Margin="0"
+                            Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{l:T np.room_volumes}" Style="{StaticResource SectionHeaderStyle}" />
+                            <ItemsControl ItemsSource="{Binding Members}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:MemberViewModel}">
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="160" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="40" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding RoomName}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding ModelName}" FontSize="11" Style="{StaticResource SecondaryTextStyle}" />
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Content="{Binding IsMuted, Converter={StaticResource MuteGlyph}}"
+                                                    Command="{Binding ToggleMuteCommand}" AutomationProperties.Name="{Binding RoomName, StringFormat={l:T np.mute_room}}" />
+                                            <Slider Grid.Column="2" Margin="8,0" VerticalAlignment="Center" Minimum="0" Maximum="100"
+                                                    IsMoveToPointEnabled="True" SmallChange="1" LargeChange="5"
+                                                    Value="{Binding Volume, Mode=TwoWay}" IsEnabled="{Binding IsFixed, Converter={StaticResource InverseBool}}"
+                                                    AutomationProperties.Name="{Binding RoomName, StringFormat={l:T np.room_volume}}" />
+                                            <TextBlock Grid.Column="3" Text="{Binding Volume}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                       Style="{StaticResource SecondaryTextStyle}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                <Grid Tag="queue" Margin="0,0,0,16" Visibility="{Binding Visibility, ElementName=QueueCard}">
+                    <!-- Queue of the selected group -->
+                    <Border x:Name="QueueCard" Style="{StaticResource CardStyle}" Margin="0"
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Visibility="{Binding SupportsQueue, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{l:T np.queue}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,2" />
+                                    <TextBlock Text="{Binding QueueSummary, TargetNullValue={l:T np.queue_empty}}" Style="{StaticResource SettingHintStyle}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,24,0">
+                                    <views:BusySpinner Width="14" Height="14" Thickness="2" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                       Visibility="{Binding IsLoadingQueue, Converter={StaticResource BoolToVisibility}}" />
+                                    <Button Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" Command="{Binding LoadQueueCommand}"
+                                            ToolTip="{l:T np.queue_reload}" AutomationProperties.Name="{l:T np.queue_reload}" />
+                                    <Button Style="{StaticResource IconButtonStyle}" Content="&#xE74D;" Command="{Binding ClearQueueCommand}"
+                                            IsEnabled="{Binding HasQueueItems}"
+                                            ToolTip="{l:T np.queue_clear}" AutomationProperties.Name="{l:T np.queue_clear}" />
+                                </StackPanel>
+                            </Grid>
+                            <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                          Visibility="{Binding HasQueueItems, Converter={StaticResource BoolToVisibility}}">
+                                <ItemsControl ItemsSource="{Binding QueueItems}" VirtualizingPanel.IsVirtualizing="True">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:QueueItemViewModel}">
+                                            <Border x:Name="Row" CornerRadius="6" Padding="6,4" Background="Transparent" Cursor="Hand"
+                                                    ToolTip="{l:T np.queue_play_tooltip}">
+                                                <Border.InputBindings>
+                                                    <MouseBinding Gesture="LeftDoubleClick" CommandParameter="{Binding}"
+                                                                  Command="{Binding DataContext.PlayQueueItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                </Border.InputBindings>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="36" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="Number" Text="{Binding Position}" VerticalAlignment="Center" FontSize="12"
+                                                               Style="{StaticResource SecondaryTextStyle}" />
+                                                    <TextBlock x:Name="Playing" Text="&#xE995;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Visibility="Collapsed" />
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock x:Name="TitleText" Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Subtitle}" FontSize="12" Style="{StaticResource SecondaryTextStyle}"
+                                                                   Visibility="{Binding Subtitle, Converter={StaticResource NullToVisibility}}" />
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Width="30" Height="30" FontSize="13" Content="&#xE768;"
+                                                            Command="{Binding DataContext.PlayQueueItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" ToolTip="{l:T np.queue_play}" AutomationProperties.Name="{l:T np.queue_play}" />
+                                                    <Button Grid.Column="3" Style="{StaticResource IconButtonStyle}" Width="30" Height="30" FontSize="12" Content="&#xE711;"
+                                                            Command="{Binding DataContext.RemoveQueueItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" ToolTip="{l:T np.queue_remove}" AutomationProperties.Name="{l:T np.queue_remove}" />
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                                </Trigger>
+                                                <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                                                    <Setter TargetName="Number" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="Playing" Property="Visibility" Value="Visible" />
+                                                    <Setter TargetName="TitleText" Property="FontWeight" Value="SemiBold" />
+                                                    <Setter TargetName="TitleText" Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                <Grid Tag="sound" Margin="0,0,0,16" Visibility="{Binding Visibility, ElementName=SoundCard}">
+                    <!-- Sound per room -->
+                    <Border x:Name="SoundCard"
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Visibility="{Binding SupportsSound, Converter={StaticResource BoolToVisibility}}">
+                        <Expander IsExpanded="{Binding IsSoundExpanded, Mode=TwoWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                            <Expander.Header>
+                                <StackPanel>
+                                    <TextBlock Text="{l:T np.sound}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,2" />
+                                    <TextBlock Text="{l:T np.sound_hint}" Style="{StaticResource SettingHintStyle}" />
+                                </StackPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="0,12,0,0">
+                                <Grid Margin="0,0,0,12" Visibility="{Binding SelectedGroup.IsGroup, Converter={StaticResource BoolToVisibility}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{l:T np.sound_room}" VerticalAlignment="Center" />
+                                    <ComboBox Grid.Column="1" MinWidth="200" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding SelectedGroup.Members}" SelectedItem="{Binding SoundRoom, Mode=TwoWay}"
+                                              DisplayMemberPath="RoomName" AutomationProperties.Name="{l:T np.sound_room}" />
+                                </Grid>
+                                <views:BusySpinner Width="18" Height="18" Thickness="2" HorizontalAlignment="Left"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                   Visibility="{Binding IsLoadingSound, Converter={StaticResource BoolToVisibility}}" />
+                                <ContentControl Content="{Binding Sound}" Focusable="False">
+                                    <ContentControl.ContentTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SoundViewModel}">
+                                            <StackPanel>
+                                                <Grid Margin="0,2" Width="520" HorizontalAlignment="Left">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="40" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{l:T np.sound_bass}" VerticalAlignment="Center" />
+                                                    <Slider Grid.Column="1" Minimum="{Binding MinLevel}" Maximum="{Binding MaxLevel}" TickFrequency="1"
+                                                            IsSnapToTickEnabled="True" TickPlacement="BottomRight" SmallChange="1" LargeChange="2"
+                                                            Value="{Binding Bass, Mode=TwoWay}"
+                                                            AutomationProperties.Name="{l:T np.sound_bass}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Bass}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                               Style="{StaticResource SecondaryTextStyle}" />
+                                                </Grid>
+                                                <Grid Margin="0,2" Width="520" HorizontalAlignment="Left">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="40" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{l:T np.sound_treble}" VerticalAlignment="Center" />
+                                                    <Slider Grid.Column="1" Minimum="{Binding MinLevel}" Maximum="{Binding MaxLevel}" TickFrequency="1"
+                                                            IsSnapToTickEnabled="True" TickPlacement="BottomRight" SmallChange="1" LargeChange="2"
+                                                            Value="{Binding Treble, Mode=TwoWay}"
+                                                            AutomationProperties.Name="{l:T np.sound_treble}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Treble}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                                               Style="{StaticResource SecondaryTextStyle}" />
+                                                </Grid>
+                                                <WrapPanel Margin="0,10,0,0">
+                                                    <CheckBox Content="{l:T np.sound_loudness}" IsChecked="{Binding Loudness, Mode=TwoWay}" Margin="0,0,24,6"
+                                                              ToolTip="{l:T np.sound_loudness_tooltip}" />
+                                                    <CheckBox Content="{l:T np.sound_night}" IsChecked="{Binding NightMode, Mode=TwoWay}" Margin="0,0,24,6"
+                                                              ToolTip="{l:T np.sound_night_tooltip}"
+                                                              Visibility="{Binding HasNightMode, Converter={StaticResource BoolToVisibility}}" />
+                                                    <CheckBox Content="{l:T np.sound_speech}" IsChecked="{Binding SpeechEnhancement, Mode=TwoWay}" Margin="0,0,24,6"
+                                                              ToolTip="{l:T np.sound_speech_tooltip}"
+                                                              Visibility="{Binding HasSpeechEnhancement, Converter={StaticResource BoolToVisibility}}" />
+                                                </WrapPanel>
+                                                <Button Content="{l:T np.sound_reset}" Command="{Binding ResetEqualizerCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ContentControl.ContentTemplate>
+                                </ContentControl>
+                            </StackPanel>
+                        </Expander>
+                    </Border>
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,48,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                <Grid Tag="grouping" Margin="0,0,0,16" Visibility="{Binding Visibility, ElementName=GroupingCard}">
+                    <!-- Grouping -->
+                    <Border x:Name="GroupingCard" Style="{StaticResource CardStyle}" Margin="0"
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Visibility="{Binding CanGroup, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="{l:T np.group_rooms}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,2" />
+                                    <TextBlock Text="{l:T np.group_rooms_hint}"
+                                               Style="{StaticResource SettingHintStyle}" Margin="0,0,0,12" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,24,0">
+                                    <Button Command="{Binding PartyModeCommand}" ToolTip="{l:T np.party_tooltip}"
+                                            Visibility="{Binding CanPartyMode, Converter={StaticResource BoolToVisibility}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE7F6;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <TextBlock Text="{l:T np.party_mode}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Content="{l:T np.dissolve_group}" Margin="8,0,0,0"
+                                            Command="{Binding DissolveGroupCommand}"
+                                            Visibility="{Binding SelectedGroup.IsGroup, Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding RoomToggles}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:RoomToggleViewModel}">
+                                        <ToggleButton Style="{StaticResource ChipToggleStyle}" IsChecked="{Binding IsMember, Mode=TwoWay}"
+                                                      Command="{Binding ToggleCommand}"
+                                                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                                                      AutomationProperties.Name="{Binding RoomName}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                           Visibility="{Binding IsMember, Converter={StaticResource BoolToVisibility}}" />
+                                                <TextBlock Text="{Binding RoomName}" />
+                                            </StackPanel>
+                                        </ToggleButton>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="&#xE76F;" FontFamily="{StaticResource IconFont}" FontSize="14" Padding="6" Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Cursor="SizeAll" Opacity="0.45" ToolTip="{l:T np.drag_card_tooltip}" PreviewMouseLeftButtonDown="OnGripMouseDown" AutomationProperties.Name="{l:T np.move_card}" />
+                </Grid>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,0 +1,424 @@
+<Window x:Class="SonosDesk.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:SonosDesk.App.Localization"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SonosDesk.App.ViewModels"
+        xmlns:views="clr-namespace:SonosDesk.App.Views"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        Title="SonosDesk"
+        Icon="pack://application:,,,/Resources/SonosDesk.ico"
+        Width="1120" Height="740" MinWidth="820" MinHeight="540"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True">
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RescanCommand}" />
+        <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding ShowSettingsCommand}" />
+        <KeyBinding Key="Space" Modifiers="Control" Command="{Binding SelectedGroup.PlayPauseCommand}" />
+        <KeyBinding Key="Right" Modifiers="Control" Command="{Binding SelectedGroup.NextCommand}" />
+        <KeyBinding Key="Left" Modifiers="Control" Command="{Binding SelectedGroup.PreviousCommand}" />
+        <KeyBinding Key="Up" Modifiers="Control" Command="{Binding VolumeUpCommand}" />
+        <KeyBinding Key="Down" Modifiers="Control" Command="{Binding VolumeDownCommand}" />
+        <KeyBinding Key="M" Modifiers="Control" Command="{Binding SelectedGroup.ToggleMuteCommand}" />
+        <KeyBinding Key="MediaPlayPause" Command="{Binding SelectedGroup.PlayPauseCommand}" />
+        <KeyBinding Key="MediaNextTrack" Command="{Binding SelectedGroup.NextCommand}" />
+        <KeyBinding Key="MediaPreviousTrack" Command="{Binding SelectedGroup.PreviousCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Navigation: rooms and groups -->
+        <!-- Transparent background: right-clicks on empty space must hit the panel too. -->
+        <Grid Grid.Column="0" Margin="12,8,4,12" Background="Transparent">
+            <Grid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{l:T main.add_speaker_by_ip}" Click="OnAddSpeakerClick">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="{l:T main.rescan}" Command="{Binding RescanCommand}" InputGestureText="F5">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem Header="{l:T main.manage_addresses}" Command="{Binding ShowSettingsCommand}">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </Grid.ContextMenu>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Margin="8,4,0,16">
+                <Image Source="pack://application:,,,/Resources/AppIcon.png" Width="32" Height="32"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="SonosDesk" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding BackendName}" FontSize="11" Style="{StaticResource SecondaryTextStyle}" />
+                </StackPanel>
+            </StackPanel>
+
+            <Grid Grid.Row="1" Margin="8,0,0,6">
+                <TextBlock Text="{l:T main.rooms}" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
+                <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;"
+                        Command="{Binding RescanCommand}" ToolTip="{l:T main.rescan_tooltip}"
+                        AutomationProperties.Name="{l:T main.rescan_short}" />
+            </Grid>
+
+            <ListBox Grid.Row="2" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}"
+                     PreviewMouseLeftButtonDown="OnRoomListMouseDown" PreviewMouseLeftButtonUp="OnRoomListClick" KeyDown="OnRoomListKeyDown"
+                     Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     AutomationProperties.Name="{l:T main.rooms_and_groups}"
+                     Visibility="{Binding HasGroups, Converter={StaticResource BoolToVisibility}}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:GroupViewModel}">
+                        <StackPanel Margin="0,2">
+                            <!-- Group row: click = whole group, Ctrl+click = select all its rooms -->
+                            <Border x:Name="GroupRow" CornerRadius="6" Padding="4,2,0,2" Background="Transparent" BorderThickness="3,0,0,0" BorderBrush="Transparent"
+                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{l:T main.speaker_info}"
+                                                  Command="{Binding PlacementTarget.Tag.ShowSpeakerInfoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding Group.CoordinatorId}"
+                                                  Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{l:T main.speaker_info}" ItemsSource="{Binding Members}"
+                                                  Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" />
+                                            </MenuItem.Icon>
+                                            <MenuItem.ItemContainerStyle>
+                                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                    <Setter Property="Header" Value="{Binding RoomName}" />
+                                                    <Setter Property="Command" Value="{Binding PlacementTarget.Tag.ShowSpeakerInfoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                    <Setter Property="CommandParameter" Value="{Binding PlayerId}" />
+                                                </Style>
+                                            </MenuItem.ItemContainerStyle>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="{l:T main.add_speaker_by_ip}" Click="OnAddSpeakerClick" />
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <Grid AutomationProperties.Name="{Binding Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Width="44" Height="44" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}" />
+                                    <StackPanel Grid.Column="1" Margin="12,0,6,0" VerticalAlignment="Center" ToolTip="{Binding RoomsText}">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="12" Style="{StaticResource SecondaryTextStyle}" />
+                                        <Border HorizontalAlignment="Left" Margin="0,4,0,0" Padding="6,1" CornerRadius="8"
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE71B;" FontFamily="{StaticResource IconFont}" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"
+                                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                <TextBlock Text="{Binding GroupBadge}" FontSize="11" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                <TextBlock Text="{Binding PresetName, StringFormat=' · {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding PresetBrush}"
+                                                           Visibility="{Binding PresetName, Converter={StaticResource NullToVisibility}}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="12" Margin="0,0,6,0"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{l:T main.selected}"
+                                                   Visibility="{Binding IsMarked, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="&#xE767;" FontFamily="{StaticResource IconFont}" FontSize="14"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{l:T main.playing_now}"
+                                                   Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Speakers of a group: click = only this speaker, Ctrl+click = add to selection -->
+                            <ItemsControl ItemsSource="{Binding Members}" Margin="24,2,0,2"
+                                          Visibility="{Binding IsGroup, Converter={StaticResource BoolToVisibility}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:MemberViewModel}">
+                                        <Border x:Name="MemberRow" CornerRadius="4" Padding="8,3" Margin="0,1" Background="Transparent" Cursor="Hand"
+                                                ToolTip="{l:T main.member_tooltip}"
+                                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                            <Border.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="{l:T main.speaker_info}"
+                                                              Command="{Binding PlacementTarget.Tag.ShowSpeakerInfoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                              CommandParameter="{Binding PlayerId}">
+                                                        <MenuItem.Icon>
+                                                            <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" />
+                                                        </MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="&#xE7F5;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding RoomName}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                           Visibility="{Binding IsMarked, Converter={StaticResource BoolToVisibility}}" />
+                                            </Grid>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <Trigger SourceName="MemberRow" Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="MemberRow" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                            </Trigger>
+                                            <DataTrigger Binding="{Binding IsMarked}" Value="True">
+                                                <Setter TargetName="MemberRow" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding PresetName, Converter={StaticResource NullToVisibility}}" Value="Visible">
+                                <Setter TargetName="GroupRow" Property="BorderBrush" Value="{Binding PresetBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsMarked}" Value="True">
+                                <Setter TargetName="GroupRow" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Empty / loading state -->
+            <StackPanel Grid.Row="2" Margin="8,24,8,0"
+                        Visibility="{Binding HasGroups, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,16"
+                             Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text="{Binding EmptyText}" TextWrapping="Wrap" Style="{StaticResource SecondaryTextStyle}" />
+                <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" FontSize="12" Style="{StaticResource SettingHintStyle}"
+                           Visibility="{Binding HasDiscoveryProblem, Converter={StaticResource BoolToVisibility}}"
+                           Text="{l:T main.discovery_tip}" />
+            </StackPanel>
+
+            <!-- Footer: room selection, discovery status and global actions -->
+            <StackPanel Grid.Row="3" Margin="8,12,0,0">
+                <!-- Areas: named, colored room combinations -->
+                <Grid Margin="0,0,0,4">
+                    <TextBlock Text="{l:T main.areas}" Style="{StaticResource SectionHeaderStyle}" Margin="0" VerticalAlignment="Center" />
+                    <Button HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Width="28" Height="28" FontSize="12" Content="&#xE710;"
+                            Click="OnCreatePreset" ToolTip="{l:T main.create_area_tooltip}" AutomationProperties.Name="{l:T main.create_area}" />
+                </Grid>
+                <TextBlock Text="{l:T main.areas_hint}" FontSize="11" Margin="0,0,0,6"
+                           Style="{StaticResource SettingHintStyle}"
+                           Visibility="{Binding HasRoomPresets, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8"
+                              Visibility="{Binding HasRoomPresets, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl ItemsSource="{Binding RoomPresets}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:RoomPresetViewModel}">
+                                <Border x:Name="PresetRow" CornerRadius="6" Padding="6,4" Margin="0,1" Background="Transparent" Cursor="Hand"
+                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        MouseLeftButtonUp="OnPresetClick">
+                                    <Border.ToolTip>
+                                        <TextBlock Text="{Binding RoomsText, StringFormat={l:T main.preset_tooltip}}" />
+                                    </Border.ToolTip>
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{l:T main.group_action}" Command="{Binding PlacementTarget.Tag.ActivatePresetCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding}" />
+                                            <MenuItem Header="{l:T main.edit}" Click="OnEditPreset" />
+                                            <Separator />
+                                            <MenuItem Header="{l:T main.delete}" Command="{Binding PlacementTarget.Tag.DeletePresetCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding}" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="{Binding Brush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding RoomsText}" FontSize="11" Style="{StaticResource SecondaryTextStyle}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="&#xE71B;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center"
+                                                   Foreground="{Binding Brush}" ToolTip="{l:T main.preset_formed}"
+                                                   Visibility="{Binding IsFormed, Converter={StaticResource BoolToVisibility}}" />
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="PresetRow" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="PresetRow" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="6"
+                        Background="{DynamicResource SystemFillColorAttentionBackgroundBrush}"
+                        BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" BorderThickness="1"
+                        Visibility="{Binding HasRoomSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SelectionText}" TextWrapping="Wrap" FontSize="12" />
+                        <TextBlock Text="{l:T main.selection_hint}" TextWrapping="Wrap" FontSize="11" Margin="0,2,0,6"
+                                   Style="{StaticResource SettingHintStyle}" />
+                        <WrapPanel>
+                            <Button Content="{l:T main.group_action}" Margin="0,0,6,4" Padding="10,3" Style="{DynamicResource AccentButtonStyle}" Command="{Binding GroupSelectionCommand}" />
+                            <Button Content="{l:T main.save_as_area}" Margin="0,0,6,4" Padding="10,3" Click="OnSaveSelectionAsPreset" />
+                            <Button Content="{l:T main.clear_selection}" Margin="0,0,0,4" Padding="10,3" Command="{Binding ClearSelectionCommand}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasDiscoveryProblem}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSearching}" Value="True">
+                                        <Setter Property="Fill" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding DiscoveryText}" Margin="8,0,0,0" FontSize="12" Style="{StaticResource SecondaryTextStyle}" />
+                </StackPanel>
+                <Button HorizontalAlignment="Stretch" Margin="0,0,0,8" Command="{Binding ShowRadioCommand}"
+                        ToolTip="{l:T main.radio_tooltip}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{l:T main.radio}" />
+                    </StackPanel>
+                </Button>
+                <Button HorizontalAlignment="Stretch" Margin="0,0,0,8" Command="{Binding OpenComposerCommand}"
+                        IsEnabled="{Binding CanGroup}" ToolTip="{l:T main.create_group_tooltip}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{l:T main.create_group}" />
+                    </StackPanel>
+                </Button>
+                <UniformGrid Columns="2">
+                    <Button Margin="0,0,4,0" Command="{Binding PauseAllCommand}" ToolTip="{l:T main.pause_all_tooltip}"
+                            IsEnabled="{Binding HasGroups}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE769;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="{l:T main.pause_all}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Margin="4,0,0,0" Command="{Binding ShowSettingsCommand}" ToolTip="{l:T main.settings_tooltip}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="{l:T main.settings}" />
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content -->
+        <Border Grid.Column="1" Margin="4,0,0,0" CornerRadius="8,0,0,0"
+                Background="{DynamicResource LayerFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1,1,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Message bars -->
+                <StackPanel Grid.Row="0">
+                <Border Margin="24,16,24,0" DataContext="{Binding Notifications}" Style="{StaticResource InfoBarStyle}"
+                        Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource InfoBarIconStyle}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Width="28" Height="28" FontSize="10"
+                                Content="&#xE8BB;" Command="{Binding DismissCommand}" AutomationProperties.Name="{l:T main.dismiss_message}" />
+                    </Grid>
+                </Border>
+
+                <Border Margin="24,16,24,0" CornerRadius="6" BorderThickness="1" Padding="12,8"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                        Visibility="{Binding BackendNotice, Converter={StaticResource NullToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" Margin="0,2,10,0" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+                        <TextBlock Text="{Binding BackendNotice}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- New release on GitHub -->
+                <Border Margin="24,16,24,0" CornerRadius="6" BorderThickness="1" Padding="12,10" DataContext="{Binding Updates}"
+                        BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
+                        Background="{DynamicResource SystemFillColorAttentionBackgroundBrush}"
+                        Visibility="{Binding IsBannerVisible, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFont}" FontSize="16" Margin="0,2,12,0" VerticalAlignment="Top"
+                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding UpdateTitle}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding UpdateNotes}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Visibility="{Binding UpdateNotes, Converter={StaticResource NullToVisibility}}" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="{l:T update.download}" Style="{DynamicResource AccentButtonStyle}" Padding="12,4"
+                                        Command="{Binding OpenReleaseCommand}" />
+                                <Button Content="{l:T update.later}" Padding="12,4" Margin="8,0,0,0" Command="{Binding DismissCommand}" />
+                                <Button Content="{l:T update.skip}" Padding="12,4" Margin="8,0,0,0" Command="{Binding SkipVersionCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Grid.Column="2" Style="{StaticResource IconButtonStyle}" Width="28" Height="28" FontSize="10" VerticalAlignment="Top"
+                                Content="&#xE8BB;" Command="{Binding DismissCommand}" AutomationProperties.Name="{l:T main.dismiss_message}" />
+                    </Grid>
+                </Border>
+                </StackPanel>
+
+                <views:NowPlayingView Grid.Row="1"
+                                      Visibility="{Binding IsNowPlayingPage, Converter={StaticResource BoolToVisibility}}" />
+                <views:RadioView Grid.Row="1" DataContext="{Binding Radio}"
+                                 Visibility="{Binding DataContext.IsRadioPage, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
+                <views:GroupComposerView Grid.Row="1"
+                                         Visibility="{Binding IsComposerPage, Converter={StaticResource BoolToVisibility}}" />
+                <views:SettingsView Grid.Row="1" DataContext="{Binding Settings}"
+                                    Visibility="{Binding DataContext.IsSettingsPage, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

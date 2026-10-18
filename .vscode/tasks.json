@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/SonosDesk.sln", "-c", "Debug", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["test", "--solution", "${workspaceFolder}/SonosDesk.sln", "-c", "Debug"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish (self-contained)",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "publish", "${workspaceFolder}/src/SonosDesk.App/SonosDesk.App.csproj", "-c", "Release", "-r", "win-x64", "--self-contained",
+        "-p:PublishSingleFile=true", "-p:IncludeNativeLibrariesForSelfExtract=true", "-p:EnableCompressionInSingleFile=true",
+        "-o", "${workspaceFolder}/artifacts/SonosDesk-win-x64"
+      ],
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

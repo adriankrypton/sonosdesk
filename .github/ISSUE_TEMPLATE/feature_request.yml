@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest an idea for SonosDesk
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe the situation and what is missing today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed solution
+      description: How could SonosDesk help? Screens, menus or shortcuts you have in mind.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Speakers involved, links to Sonos documentation, alternatives you tried.

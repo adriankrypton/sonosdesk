@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Windows 10 2004+ SDK projection: System Media Transport Controls (media keys, media overlay). -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <RootNamespace>SonosDesk.App</RootNamespace>
+    <AssemblyName>SonosDesk</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>..\..\assets\SonosDesk.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WPF0001: the Fluent ThemeMode API is marked experimental in .NET 9/10. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <!-- Build time shown next to the version (Release builds; CI passes it explicitly). -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(BuildTimestamp)' == ''">
+    <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</BuildTimestamp>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BuildTimestamp)' != ''">
+    <AssemblyMetadata Include="BuildTimestamp" Value="$(BuildTimestamp)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SonosDesk.Core\SonosDesk.Core.csproj" />
+    <ProjectReference Include="..\SonosDesk.Infrastructure\SonosDesk.Infrastructure.csproj" />
+    <ProjectReference Include="..\SonosDesk.Windows\SonosDesk.Windows.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\assets\icon-256.png" Link="Resources\AppIcon.png" />
+    <Resource Include="..\..\assets\SonosDesk.ico" Link="Resources\SonosDesk.ico" />
+  </ItemGroup>
+
+</Project>

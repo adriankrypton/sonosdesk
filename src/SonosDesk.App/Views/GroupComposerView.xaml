@@ -1,0 +1,124 @@
+<UserControl x:Class="SonosDesk.App.Views.GroupComposerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:SonosDesk.App.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SonosDesk.App.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:MainViewModel}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="32,24,32,8">
+            <Button Style="{StaticResource IconButtonStyle}" Content="&#xE72B;" Margin="-8,0,8,0" Command="{Binding ShowNowPlayingCommand}"
+                    ToolTip="{l:T composer.back}" AutomationProperties.Name="{l:T composer.back}" />
+            <TextBlock Text="{l:T composer.title}" Style="{DynamicResource TitleTextBlockStyle}" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="32,8,32,24" MaxWidth="900">
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{l:T composer.step_speakers}" Style="{StaticResource SectionHeaderStyle}" />
+                        <TextBlock Style="{StaticResource SettingHintStyle}" Margin="0,-6,0,12"
+                                   Text="{l:T composer.step_speakers_hint}" />
+                        <ItemsControl ItemsSource="{Binding ComposerRooms}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:SelectableRoomViewModel}">
+                                    <ToggleButton Style="{StaticResource ChipToggleStyle}" IsChecked="{Binding IsSelected}" AutomationProperties.Name="{Binding RoomName}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                       Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}" />
+                                            <TextBlock Text="{Binding RoomName}" />
+                                            <TextBlock Text="&#xE767;" FontFamily="{StaticResource IconFont}" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                       ToolTip="{l:T composer.playing_now}" Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
+                                        </StackPanel>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{l:T composer.step_content}" Style="{StaticResource SectionHeaderStyle}" />
+                        <ComboBox ItemsSource="{Binding ComposerFavoriteOptions}" SelectedItem="{Binding ComposerFavorite}" HorizontalAlignment="Left" MinWidth="380"
+                                  AutomationProperties.Name="{l:T composer.favorite}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:FavoriteViewModel}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ContentPresenter Width="28" Height="28" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}" />
+                                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" />
+                                            <TextBlock Text="{Binding Description}" FontSize="11" Style="{StaticResource SecondaryTextStyle}"
+                                                       Visibility="{Binding Description, Converter={StaticResource NullToVisibility}}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Style="{StaticResource SettingHintStyle}"
+                                   Text="{l:T composer.favorite_hint}" />
+                        <TextBlock Style="{StaticResource SettingHintStyle}" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                   Text="{l:T composer.no_favorites_support}"
+                                   Visibility="{Binding SupportsFavorites, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{l:T composer.step_volume}" Style="{StaticResource SectionHeaderStyle}" />
+                        <CheckBox Content="{l:T composer.set_volume}" IsChecked="{Binding ComposerSetVolume}" />
+                        <Grid Margin="28,8,0,0" MaxWidth="420" HorizontalAlignment="Left" Width="420" IsEnabled="{Binding ComposerSetVolume}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+                            <Slider Minimum="0" Maximum="100" Value="{Binding ComposerVolume}" IsMoveToPointEnabled="True" AutomationProperties.Name="{l:T composer.group_volume}" />
+                            <TextBlock Grid.Column="1" Text="{Binding ComposerVolume}" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{l:T composer.save_for_later}" Style="{StaticResource SectionHeaderStyle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding ComposerName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{l:T composer.quick_action_name}" />
+                            <Button Grid.Column="1" Margin="8,0,0,0" Content="{l:T composer.save_quick_action}" Command="{Binding SaveComposedAsQuickActionCommand}" />
+                        </Grid>
+                        <TextBlock Style="{StaticResource SettingHintStyle}"
+                                   Text="{l:T composer.save_hint}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="32,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="{l:T composer.cancel}" MinWidth="110" Command="{Binding ShowNowPlayingCommand}" />
+                <Button Margin="8,0,0,0" MinWidth="160" Style="{DynamicResource AccentButtonStyle}" Command="{Binding CreateComposedGroupCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE768;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{l:T composer.create}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

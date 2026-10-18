@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>SonosDesk.Windows</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WinForms is only used for the notification-area icon, its context menu and message windows. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <!-- Required by source-generated LibraryImport P/Invoke stubs. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SonosDesk.Core\SonosDesk.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\SonosDesk.ico" Link="Resources\SonosDesk.ico" LogicalName="SonosDesk.Windows.SonosDesk.ico" />
+  </ItemGroup>
+
+</Project>
