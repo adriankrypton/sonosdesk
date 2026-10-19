@@ -91,6 +91,14 @@ jobs:
         working-directory: electron
         run: node scripts/publish-server.mjs --platform mac --arch x64,arm64
 
+      - name: Smoke test server on macOS
+        working-directory: electron
+        run: |
+          export SONOSDESK_TOKEN=$(openssl rand -hex 32) SONOSDESK_DATA_DIR="$RUNNER_TEMP/sonosdesk-data"
+          line=$( (sleep 8) | ./server/arm64/SonosDesk.Server | head -n 1 )
+          echo "$line"
+          case "$line" in SONOSDESK_READY\ http://127.0.0.1:*) ;; *) exit 1 ;; esac
+
       - name: Build app
         working-directory: electron
         env:
