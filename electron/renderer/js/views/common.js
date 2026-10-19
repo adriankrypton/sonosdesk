@@ -28,14 +28,6 @@ function hueOf(text) {
   return Math.abs(hash) % 360;
 }
 
-// Blurred cover behind the now-playing area.
-export function backdrop(url) {
-  const src = assetUrl(url);
-  return src
-    ? keyed(src, html`<span class="backdrop" aria-hidden="true" style=${`background-image:url("${src.replace(/"/g, '%22')}")`}></span>`)
-    : html`<span class="backdrop empty" aria-hidden="true"></span>`;
-}
-
 export const spinner =(className = '') => html`<span class="spinner ${className}" aria-hidden="true"></span>`;
 
 export function iconButton({ icon, label, onClick, disabled = false, active = false, className = '', title }) {

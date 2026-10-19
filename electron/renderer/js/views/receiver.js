@@ -7,7 +7,7 @@ import {
   toggleReceiverMute, toggleReceiverPlay, toggleReceiverSound,
 } from '../actions/receivers.js';
 import { stationLogo } from '../actions/radio.js';
-import { art, backdrop, cardHeader, chip, expander, iconButton, playPauseButton, slider, spinner } from './common.js';
+import { art, cardHeader, chip, expander, iconButton, playPauseButton, slider, spinner } from './common.js';
 import { icons } from './icons.js';
 
 const TONE_MIN = -6;
@@ -18,7 +18,6 @@ function heroView(receiver) {
   const display = receiverDisplay(receiver, { buffering: local.buffering }, t);
   const volume = receiverVolume(receiver);
   return html`<section class="hero">
-    ${backdrop(receiver.playing ? receiver.artUrl : null)}
     ${art(receiver.playing ? receiver.artUrl : null, { size: 260, className: 'hero-art contain', seed: receiver.name, placeholder: icons.receiver })}
     <div class="hero-info">
       <div class="hero-head">

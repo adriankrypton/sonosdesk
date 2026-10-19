@@ -11,7 +11,7 @@ import {
   setSound, setSoundRoom, toggleCrossfade, toggleGroupMute, toggleMemberMute, togglePlay, toggleReceiverLink,
   toggleRoomMembership, toggleShuffle, toggleSoundExpanded,
 } from '../actions/sonos.js';
-import { art, backdrop, cardHeader, checkbox, chip, expander, iconButton, playPauseButton, slider, spinner } from './common.js';
+import { art, cardHeader, checkbox, chip, expander, iconButton, playPauseButton, slider, spinner } from './common.js';
 import { icons } from './icons.js';
 
 const SLEEP_MINUTES = [15, 30, 45, 60, 90, 120];
@@ -92,7 +92,6 @@ function heroView(group) {
   const source = sourceText(playback, t);
   const volume = groupVolume(group);
   return html`<section class="hero">
-    ${backdrop(playback?.artUrl)}
     ${art(playback?.artUrl, { size: 260, className: 'hero-art', seed: group.name })}
     <div class="hero-info">
       <div class="hero-head">
