@@ -1,0 +1,6 @@
+{
+  "radio.menu.rename": "Переименовать …",
+  "radio.rename_station_hint": "Название отображается в SonosDesk, в приложении Sonos и на дисплее ресивера.",
+  "radio.rename_station_title": "Переименовать станцию",
+  "radio.renamed": "Переименовано в «{0}»."
+}

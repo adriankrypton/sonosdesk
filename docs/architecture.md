@@ -90,3 +90,19 @@ Volume sliders are debounced (180 ms) and ignore polled values for 2.5 s after a
 | `secrets\*.bin` | DPAPI-encrypted client secret / OAuth tokens |
 | `logos\*.png` | Custom logos of saved radio stations (scaled to 256 px) |
 | `logs\sonosdesk-YYYYMMDD.log` | Rolling logs (7 days, max. 5 MB/day) |
+
+## macOS: Electron app and SonosDesk.Server
+
+On macOS (and optionally Windows) the user interface is an Electron app in `electron/`. It does not contain
+any Sonos logic. Its main process starts `SonosDesk.Server` – an ASP.NET Core process that hosts
+`SonosDesk.Core` and `SonosDesk.Infrastructure` exactly like the WPF app does – and talks to it over a
+local REST and WebSocket API ([desktop-api.md](desktop-api.md)).
+
+- The server listens on `127.0.0.1` on a random port only, checks the `Host` header and requires a bearer
+  token that Electron generates for each run.
+- The renderer is loaded from `app://sonosdesk/`; its API requests go through the main process, which adds
+  the token. Only the WebSocket connects directly.
+- Secrets (Control API tokens) are encrypted by the server with AES-GCM; the key is kept by Electron with
+  `safeStorage` (Keychain on macOS).
+- Packaged apps contain the self-contained server for their architecture (`scripts/publish-server.mjs`,
+  `osx-arm64` / `osx-x64`); CI builds both and signs the bundle ad-hoc.

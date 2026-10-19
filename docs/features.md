@@ -45,6 +45,22 @@ software 97.2) during development. Everything else is tested with simulated resp
 | Event subscriptions (GENA) instead of polling | ⏳ | | needs an inbound HTTP listener + firewall rule |
 | Alarms, line-in selection | ⏳ | | |
 
+## Pioneer AV receivers (VSX) 🧪
+
+Controlled via Pioneer IP control (TCP 8102) and the receiver's UPnP media renderer. Verified on a
+Pioneer VSX-529 (VSX-830/SYXEV8).
+
+| Feature | Status | Verified on hardware | Notes |
+| --- | --- | --- | --- |
+| Add by IP address, network search (SSDP MediaRenderer + Pioneer description) | ✅ | yes | |
+| Status: power, volume, mute, input, front display | ✅ | yes | `?P`, `?V`, `?M`, `?F`, `?FL` |
+| Volume 0–100 (100 = 0 dB reference), mute, on/off | ✅ | read: yes | `xxxVL`, `MO`/`MF`, `PO`/`PF` |
+| Sound: listening mode (Auto Surround, Stereo, Extended Stereo …), bass/treble −6…+6 dB | ✅ | yes | `xxxxSR`, `?S`, `1TO`, `xxBA`, `xxTR` |
+| Internet radio via the media renderer, display "Station - via SonosDesk" alternating with the song | ✅ | yes | stream relayed by SonosDesk (ICY title replaced, HTTPS → HTTP) |
+| Coupling with a Sonos room (same internet radio station, start/stop) | ✅ | no | only streams Sonos plays from an http(s) URL |
+| Info: model, software version, host name, control port | ✅ | yes | `?RGD`, `?SSI`, `?SSO`, description, reverse DNS |
+| Volume profiles / quick actions with receivers (fade) | ✅ | no | |
+
 ## Sonos Control API backend (cloud) 🧪
 
 Implemented from the [official documentation](https://docs.sonos.com/reference), tested with simulated

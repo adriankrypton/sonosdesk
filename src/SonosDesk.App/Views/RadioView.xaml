@@ -22,10 +22,19 @@
                         <MenuItem Header="{l:T radio.menu.reset_logo}" Command="{Binding ResetLogoCommand}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                   IsEnabled="{Binding PlacementTarget.DataContext.HasCustomLogo, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="{l:T radio.menu.rename}" Click="OnRenameStation"
+                                  Visibility="{Binding PlacementTarget.DataContext.IsSaved, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibility}}" />
                         <MenuItem Header="{l:T radio.menu.move_to_folder}" Click="OnMoveToFolder" />
                         <Separator />
                         <MenuItem Header="{l:T radio.menu.toggle_saved}" Command="{Binding ToggleSaveCommand}"
                                   CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="{l:T radio.menu.delete}" Command="{Binding DeleteSavedCommand}"
+                                  CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                  Visibility="{Binding PlacementTarget.DataContext.IsSaved, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibility}}">
+                            <MenuItem.Icon>
+                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </ContextMenu>
                 </Border.ContextMenu>
                 <Grid>

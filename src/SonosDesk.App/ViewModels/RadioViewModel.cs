@@ -72,6 +72,9 @@ public sealed partial class RadioViewModel : ViewModelBase
 
     public ObservableCollection<RadioStationViewModel> SavedStations { get; } = [];
 
+    // When a receiver is selected in the room list, stations play there instead of on a Sonos room.
+    public ReceiverViewModel? ReceiverTarget { get; set; }
+
     public ObservableCollection<StationFolderViewModel> SavedFolders { get; } = [];
 
     public IReadOnlyList<string> FolderNames =>
@@ -197,6 +200,12 @@ public sealed partial class RadioViewModel : ViewModelBase
 
     private async Task PlayStationAsync(RadioStationViewModel station)
     {
+        if (ReceiverTarget is { } receiver)
+        {
+            await receiver.PlayStationAsync(station.Station);
+            return;
+        }
+
         GroupViewModel? group = null;
         var ok = await RunAsync(async ct =>
         {
@@ -243,6 +252,24 @@ public sealed partial class RadioViewModel : ViewModelBase
             }
 
             Notifier.Show(saved ? L.F("radio.added_saved", station.Name) : L.F("radio.removed", station.Name), NotificationSeverity.Success);
+        });
+    }
+
+    // Deletes a station from "My stations" (with its custom logo) after asking.
+    [RelayCommand]
+    private Task DeleteSavedAsync(RadioStationViewModel? station)
+    {
+        if (station is null || !station.IsSaved || !_shell.Confirm(L.F("radio.delete_confirm", station.Name)))
+        {
+            return Task.CompletedTask;
+        }
+
+        var logo = _configuration.Current.RadioStations.FirstOrDefault(r => r.Id == station.Station.Id)?.LogoFile;
+        return RunAsync(async ct =>
+        {
+            await _configuration.UpdateAsync(s => s with { RadioStations = [.. s.RadioStations.Where(r => r.Id != station.Station.Id)] }, ct);
+            _logos.Delete(logo);
+            Notifier.Show(L.F("radio.removed", station.Name), NotificationSeverity.Success);
         });
     }
 
@@ -378,6 +405,27 @@ public sealed partial class RadioViewModel : ViewModelBase
                 },
                 ct),
             normalized is null ? L.F("radio.moved_none", station.Name) : L.F("radio.moved_to", station.Name, normalized));
+    }
+
+    // Renames a station in "My stations"; the new name is also what the Sonos app and the receiver display show.
+    public Task RenameStationAsync(RadioStationViewModel station, string newName)
+    {
+        var name = newName.Trim();
+        if (name.Length == 0 || name == station.Name || !station.IsSaved)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (name.Length > 80)
+        {
+            name = name[..80];
+        }
+
+        return RunAsync(
+            ct => _configuration.UpdateAsync(
+                s => s with { RadioStations = [.. s.RadioStations.Select(r => r.Id == station.Station.Id ? r with { Name = name } : r)] },
+                ct),
+            L.F("radio.renamed", name));
     }
 
     public Task RenameFolderAsync(string folder, string? newName)

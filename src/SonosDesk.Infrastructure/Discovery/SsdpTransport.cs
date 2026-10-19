@@ -55,10 +55,13 @@ public sealed class UdpSsdpTransport(INetworkInterfaceProvider interfaces, ILogg
         Socket socket;
         try
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            if (OperatingSystem.IsWindows())
             {
-                ExclusiveAddressUse = false,
-            };
+                // Exclusive address use only exists on Windows; macOS shares the port through ReuseAddress.
+                socket.ExclusiveAddressUse = false;
+            }
+
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             socket.Bind(new IPEndPoint(IPAddress.Any, SsdpPort));
         }

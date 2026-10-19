@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Inloggegevens kunnen op dit systeem niet veilig worden opgeslagen (sleutelhanger niet beschikbaar).",
+  "server.quick_action_not_found": "Deze snelle actie bestaat niet meer.",
+  "server.name_required": "Voer een naam in.",
+  "server.station_not_found": "Deze zender is niet meer opgeslagen in ‘Mijn zenders’.",
+  "server.receiver_not_found": "Deze receiver is niet meer ingesteld.",
+  "server.invalid_request": "Ongeldig verzoek.",
+  "receiver.relay_not_reached_mac": "‘{0}’ kon de stream niet van SonosDesk ophalen. Sta inkomende verbindingen voor SonosDesk toe (Systeeminstellingen → Netwerk → Firewall) en toegang tot het lokale netwerk (Privacy en beveiliging)."
+}

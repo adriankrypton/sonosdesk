@@ -4,7 +4,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Deterministic>true</Deterministic>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>adriankrypton and SonosDesk contributors</Authors>
     <Product>SonosDesk</Product>
     <Copyright>Copyright (c) adriankrypton and SonosDesk contributors</Copyright>

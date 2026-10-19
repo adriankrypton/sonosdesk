@@ -44,6 +44,11 @@
                             <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" />
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="{l:T main.add_receiver_by_ip}" Click="OnAddReceiver">
+                        <MenuItem.Icon>
+                            <TextBlock Text="&#xE7F3;" FontFamily="{StaticResource IconFont}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <MenuItem Header="{l:T main.rescan}" Command="{Binding RescanCommand}" InputGestureText="F5">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xE72C;" FontFamily="{StaticResource IconFont}" />
@@ -80,13 +85,13 @@
                         AutomationProperties.Name="{l:T main.rescan_short}" />
             </Grid>
 
-            <ListBox Grid.Row="2" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}"
+            <ListBox Grid.Row="2" ItemsSource="{Binding RoomItems}" SelectedItem="{Binding SelectedRoomItem}"
                      PreviewMouseLeftButtonDown="OnRoomListMouseDown" PreviewMouseLeftButtonUp="OnRoomListClick" KeyDown="OnRoomListKeyDown"
                      Background="Transparent" BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                      AutomationProperties.Name="{l:T main.rooms_and_groups}"
                      Visibility="{Binding HasGroups, Converter={StaticResource BoolToVisibility}}">
-                <ListBox.ItemTemplate>
+                <ListBox.Resources>
                     <DataTemplate DataType="{x:Type vm:GroupViewModel}">
                         <StackPanel Margin="0,2">
                             <!-- Group row: click = whole group, Ctrl+click = select all its rooms -->
@@ -206,7 +211,69 @@
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
-                </ListBox.ItemTemplate>
+                    <!-- Receiver row: same look as a Sonos room -->
+                    <DataTemplate DataType="{x:Type vm:ReceiverViewModel}">
+                        <StackPanel Margin="0,2">
+                            <Border CornerRadius="6" Padding="4,2,0,2" Background="Transparent" BorderThickness="3,0,0,0" BorderBrush="Transparent"
+                                    Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{l:T main.speaker_info}"
+                                                  Command="{Binding PlacementTarget.Tag.ShowReceiverInfoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xE946;" FontFamily="{StaticResource IconFont}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Command="{Binding TogglePowerCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource IconFont}" />
+                                            </MenuItem.Icon>
+                                            <MenuItem.Style>
+                                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                    <Setter Property="Header" Value="{l:T receiver.power_on}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOn}" Value="True">
+                                                            <Setter Property="Header" Value="{l:T receiver.power_off}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </MenuItem.Style>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="{l:T receiver.remove}"
+                                                  Command="{Binding PlacementTarget.Tag.RemoveReceiverCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding}" />
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <Grid AutomationProperties.Name="{Binding Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="44" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Width="44" Height="44" Content="{Binding}" ContentTemplate="{StaticResource AlbumArtTemplate}" />
+                                    <StackPanel Grid.Column="1" Margin="12,0,6,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="12" Style="{StaticResource SecondaryTextStyle}" />
+                                        <Border HorizontalAlignment="Left" Margin="0,4,0,0" Padding="6,1" CornerRadius="8"
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                Visibility="{Binding IsLinked, Converter={StaticResource BoolToVisibility}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE71B;" FontFamily="{StaticResource IconFont}" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0"
+                                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                <TextBlock Text="{Binding LinkBadge}" FontSize="11" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="&#xE767;" FontFamily="{StaticResource IconFont}" FontSize="14" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" ToolTip="{l:T main.playing_now}"
+                                               Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.Resources>
             </ListBox>
 
             <!-- Empty / loading state -->
@@ -416,6 +483,8 @@
                                  Visibility="{Binding DataContext.IsRadioPage, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                 <views:GroupComposerView Grid.Row="1"
                                          Visibility="{Binding IsComposerPage, Converter={StaticResource BoolToVisibility}}" />
+                <views:ReceiverView Grid.Row="1" DataContext="{Binding SelectedReceiver}"
+                                    Visibility="{Binding DataContext.IsReceiverPage, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
                 <views:SettingsView Grid.Row="1" DataContext="{Binding Settings}"
                                     Visibility="{Binding DataContext.IsSettingsPage, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}" />
             </Grid>

@@ -69,6 +69,9 @@ public sealed record AppSettings
 
     public bool WindowsMediaControls { get; init; } = true;
 
+    // Network AV receivers (Pioneer VSX) controlled next to the Sonos rooms.
+    public IReadOnlyList<ReceiverConfig> Receivers { get; init; } = [];
+
     public SonosBackendKind Backend { get; init; } = SonosBackendKind.LocalUpnp;
 
     public ControlApiSettings ControlApi { get; init; } = new();
@@ -147,6 +150,37 @@ public sealed record SavedRadioStation
     public string? Folder { get; init; }
 
     public bool IsCustom { get; init; }
+}
+
+public sealed record ReceiverConfig
+{
+    public const double DefaultMaxVolumeDb = -20.0;
+
+    public required string Id { get; init; }
+
+    public required string Name { get; init; }
+
+    // IPv4 address in the local network.
+    public required string Host { get; init; }
+
+    public int ControlPort { get; init; } = PioneerProtocol.DefaultControlPort;
+
+    public string? Model { get; init; }
+
+    // UPnP device description (media renderer for streams); http://host:8080/description.xml on Pioneer VSX.
+    public string? DescriptionUrl { get; init; }
+
+    // Sonos room whose playback the receiver follows; null = no coupling.
+    public string? LinkedRoom { get; init; }
+
+    public bool FollowPlayback { get; init; } = true;
+
+    public bool PowerOnWithSonos { get; init; } = true;
+
+    public bool FollowVolume { get; init; }
+
+    // Upper limit for volume changes made by SonosDesk (protects speakers).
+    public double MaxVolumeDb { get; init; } = DefaultMaxVolumeDb;
 }
 
 public sealed record RoomPreset

@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Na tym systemie nie można bezpiecznie zapisać danych logowania (pęk kluczy niedostępny).",
+  "server.quick_action_not_found": "Ta szybka akcja już nie istnieje.",
+  "server.name_required": "Wpisz nazwę.",
+  "server.station_not_found": "Ta stacja nie jest już zapisana w „Moje stacje”.",
+  "server.receiver_not_found": "Ten amplituner nie jest już skonfigurowany.",
+  "server.invalid_request": "Nieprawidłowe żądanie.",
+  "receiver.relay_not_reached_mac": "„{0}” nie może pobrać strumienia z SonosDesk. Zezwól na połączenia przychodzące dla SonosDesk (Ustawienia systemowe → Sieć → Zapora) i dostęp do sieci lokalnej (Prywatność i ochrona)."
+}

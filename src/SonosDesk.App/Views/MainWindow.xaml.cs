@@ -49,6 +49,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (ReceiverAt((ListBox)sender, e) is { } receiver)
+        {
+            ViewModel.ShowReceiver(receiver);
+            return;
+        }
+
         var (group, member) = HitTest((ListBox)sender, e);
         if (group is null)
         {
@@ -64,6 +70,11 @@ public partial class MainWindow : Window
             ViewModel.OpenRoom(group);
         }
     }
+
+    private static ReceiverViewModel? ReceiverAt(ListBox list, MouseButtonEventArgs e) =>
+        e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(list, source) is ListBoxItem { DataContext: ReceiverViewModel receiver }
+            ? receiver
+            : null;
 
     private static (GroupViewModel? Group, MemberViewModel? Member) HitTest(ListBox list, MouseButtonEventArgs e)
     {
@@ -117,6 +128,25 @@ public partial class MainWindow : Window
         {
             vm.OpenRoom(group);
             e.Handled = true;
+        }
+        else if (e.Key == Key.Enter && ((ListBox)sender).SelectedItem is ReceiverViewModel receiver && DataContext is MainViewModel main)
+        {
+            main.ShowReceiver(receiver);
+            e.Handled = true;
+        }
+    }
+
+    private async void OnAddReceiver(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm)
+        {
+            return;
+        }
+
+        var dialog = new AddReceiverDialog(vm.SearchReceiversAsync) { Owner = this };
+        if (dialog.ShowDialog() == true && dialog.Address is { } address)
+        {
+            await vm.AddReceiverAsync(address);
         }
     }
 

@@ -30,6 +30,8 @@ Network data is treated as untrusted:
 | Update check | One anonymous HTTPS request to `api.github.com` (latest release of this repository) on start, can be disabled. Release links outside `github.com/adriankrypton/sonosdesk` are ignored; nothing is downloaded or executed automatically. |
 | Host names | Reverse DNS only for local speaker addresses, only when the speaker info is opened, 4 s timeout. |
 | Installer | Per-user Inno Setup installer built by GitHub Actions from the tagged source; Inno Setup itself is pinned by version and SHA-256. Releases include `SHA256SUMS.txt`. |
+| Stream relay (receivers) | TCP listener on a random port, started only when a receiver plays a stream. Only the IP address of the receiver the stream was started for may connect, URLs contain a random 128-bit token, GET/HEAD only, request header ≤ 8 KB, at most 8 connections. Upstream streams must be http(s) without user info; loopback and metadata addresses are blocked, redirects (max. 3) are re-validated. |
+| Receiver control | IP control and UPnP requests only to private IPv4 addresses configured by the user; device descriptions are parsed with the safe XML settings, control URLs on other hosts are ignored. |
 | Secrets | Control API client secret and OAuth tokens are encrypted with Windows DPAPI (current user) in `%LOCALAPPDATA%\SonosDesk\secrets`. They are never written to `settings.json` or logs. |
 | OAuth | `state` is random (192 bit), single use, expires after 15 minutes and is compared in constant time. |
 | Logs | No tokens, secrets or favorites metadata. URLs are logged without query strings. |

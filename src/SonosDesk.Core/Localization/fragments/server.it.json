@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Le credenziali non possono essere salvate in modo sicuro su questo sistema (portachiavi non disponibile).",
+  "server.quick_action_not_found": "Questa azione rapida non esiste più.",
+  "server.name_required": "Inserisci un nome.",
+  "server.station_not_found": "Questa stazione non è più salvata in «Le mie stazioni».",
+  "server.receiver_not_found": "Questo ricevitore non è più configurato.",
+  "server.invalid_request": "Richiesta non valida.",
+  "receiver.relay_not_reached_mac": "«{0}» non è riuscito a ricevere lo stream da SonosDesk. Consenti le connessioni in entrata per SonosDesk (Impostazioni di Sistema → Rete → Firewall) e l’accesso alla rete locale (Privacy e sicurezza)."
+}

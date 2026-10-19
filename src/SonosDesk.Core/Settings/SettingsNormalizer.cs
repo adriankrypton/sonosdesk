@@ -47,6 +47,7 @@ public static class SettingsNormalizer
             RadioCountryCode = NormalizeCountry(settings.RadioCountryCode),
             SkippedUpdateVersion = TrimToNull(settings.SkippedUpdateVersion) is { Length: <= 32 } skipped ? skipped : null,
             RoomPresets = NormalizePresets(settings.RoomPresets),
+            Receivers = NormalizeReceivers(settings.Receivers),
             HomeSectionOrder = (settings.HomeSectionOrder ?? [])
                 .Where(id => !string.IsNullOrWhiteSpace(id) && id.Length <= 32)
                 .Distinct(StringComparer.Ordinal)
@@ -78,6 +79,48 @@ public static class SettingsNormalizer
             .DistinctBy(p => p.Id, StringComparer.Ordinal)
             .Take(MaxRoomPresets)
             .ToList();
+
+    public const int MaxReceivers = 8;
+
+    public static List<ReceiverConfig> NormalizeReceivers(IReadOnlyList<ReceiverConfig>? receivers) =>
+        (receivers ?? [])
+            .Where(r => r is not null && IsLocalIPv4(r.Host))
+            .Select(r => r with
+            {
+                Id = string.IsNullOrWhiteSpace(r.Id) ? Guid.NewGuid().ToString("N") : r.Id.Trim(),
+                Name = TrimToNull(r.Name) is { } name ? (name.Length > 60 ? name[..60] : name) : r.Host.Trim(),
+                Host = r.Host.Trim(),
+                ControlPort = r.ControlPort is > 0 and <= 65535 ? r.ControlPort : PioneerProtocol.DefaultControlPort,
+                Model = TrimToNull(r.Model),
+                DescriptionUrl = Uri.TryCreate(r.DescriptionUrl, UriKind.Absolute, out var description)
+                    && description.Scheme == Uri.UriSchemeHttp
+                    && string.Equals(description.Host, r.Host.Trim(), StringComparison.OrdinalIgnoreCase)
+                        ? description.AbsoluteUri
+                        : null,
+                LinkedRoom = TrimToNull(r.LinkedRoom),
+                MaxVolumeDb = double.IsFinite(r.MaxVolumeDb)
+                    ? Math.Clamp(Math.Round(r.MaxVolumeDb * 2) / 2, PioneerProtocol.MinVolumeDb, PioneerProtocol.MaxVolumeDb)
+                    : ReceiverConfig.DefaultMaxVolumeDb,
+            })
+            .DistinctBy(r => r.Host, StringComparer.OrdinalIgnoreCase)
+            .DistinctBy(r => r.Id, StringComparer.Ordinal)
+            .Take(MaxReceivers)
+            .ToList();
+
+    // Private IPv4 ranges only: receivers are always controlled inside the home network.
+    public static bool IsLocalIPv4(string? host)
+    {
+        if (string.IsNullOrWhiteSpace(host)
+            || !System.Net.IPAddress.TryParse(host.Trim(), out var address)
+            || address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
+            || host.Trim().Count(c => c == '.') != 3)
+        {
+            return false;
+        }
+
+        var b = address.GetAddressBytes();
+        return b[0] == 10 || (b[0] == 172 && b[1] is >= 16 and <= 31) || (b[0] == 192 && b[1] == 168);
+    }
 
     public const int MaxRadioStations = 100;
 

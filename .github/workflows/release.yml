@@ -1,6 +1,7 @@
 name: Release
 
-# Creates a GitHub release with the installer, the portable exe and checksums.
+# Creates a GitHub release with the Windows installer, the portable exe, the macOS app
+# (Apple Silicon and Intel) and checksums.
 # Start it either by pushing a tag like "v0.2.0", or in the Actions tab with "Run workflow"
 # (uses the version from Directory.Build.props unless one is entered).
 # Installed copies of SonosDesk find the new release on start and show an update hint.
@@ -26,6 +27,10 @@ env:
 jobs:
   release:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      full: ${{ steps.version.outputs.full }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v5
 
@@ -52,6 +57,7 @@ jobs:
           $numeric = ($version -split '[-+]')[0]
           if ($numeric -notmatch '^\d+\.\d+\.\d+$') { throw "'$version' is not a version like 1.2.3" }
           "version=$numeric" >> $env:GITHUB_OUTPUT
+          "full=$version" >> $env:GITHUB_OUTPUT
           "tag=v$version" >> $env:GITHUB_OUTPUT
           "prerelease=$(if ($version -ne $numeric) { 'true' } else { 'false' })" >> $env:GITHUB_OUTPUT
           "timestamp=$((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))" >> $env:GITHUB_OUTPUT
@@ -60,7 +66,7 @@ jobs:
         run: dotnet restore SonosDesk.sln
 
       - name: Build
-        run: dotnet build SonosDesk.sln --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+        run: dotnet build SonosDesk.sln --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }} -p:InformationalVersion=${{ steps.version.outputs.full }}
 
       - name: Test
         run: dotnet test --solution SonosDesk.sln --configuration Release --no-build
@@ -73,7 +79,7 @@ jobs:
         shell: pwsh
         env:
           BuildTimestamp: ${{ steps.version.outputs.timestamp }}
-        run: ./tools/build-installer.ps1 -Version ${{ steps.version.outputs.version }} -Iscc "$env:RUNNER_TEMP\inno\ISCC.exe"
+        run: ./tools/build-installer.ps1 -Version ${{ steps.version.outputs.version }} -InformationalVersion ${{ steps.version.outputs.full }} -Iscc "$env:RUNNER_TEMP\inno\ISCC.exe"
 
       - name: Package
         shell: pwsh
@@ -128,3 +134,43 @@ jobs:
           if ($hasNotes) { $flags += @('--notes-file', 'artifacts/release-notes.md') } else { $flags += '--generate-notes' }
           if ('${{ steps.version.outputs.prerelease }}' -eq 'true') { $flags += '--prerelease' }
           gh release create $tag @files @flags
+
+  macos:
+    # Runs after the release exists and adds the macOS app (unsigned, ad-hoc signature).
+    needs: release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: electron/package-lock.json
+
+      - name: Build macOS app
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          VERSION_FULL: ${{ needs.release.outputs.full }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          npm ci
+          npm version "$VERSION_FULL" --no-git-tag-version --allow-same-version
+          node scripts/publish-server.mjs --platform mac --arch x64,arm64
+          npx electron-builder --mac --x64 --arm64 --publish never             -c.extraMetadata.version="$VERSION_FULL"
+          cd dist
+          shasum -a 256 *.dmg *.zip > SHA256SUMS-macos.txt
+
+      - name: Upload to the release
+        working-directory: electron/dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: gh release upload "$TAG" *.dmg *.zip SHA256SUMS-macos.txt --clobber

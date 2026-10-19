@@ -229,6 +229,12 @@ public sealed partial class SettingsViewModel : ViewModelBase
             RoomNames.Add(room);
         }
 
+        // Receivers can be part of volume profiles like rooms.
+        foreach (var receiver in s.Receivers.Where(r => !RoomNames.Contains(r.Name)))
+        {
+            RoomNames.Add(receiver.Name);
+        }
+
         if (s.DefaultRoom is { } d && !RoomNames.Contains(d))
         {
             RoomNames.Add(d);

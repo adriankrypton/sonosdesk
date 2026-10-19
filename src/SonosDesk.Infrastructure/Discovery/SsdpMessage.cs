@@ -196,6 +196,8 @@ public static partial class SsdpParser
     public static bool IsValidDeviceId(string? id) =>
         !string.IsNullOrEmpty(id) && id.Length <= 64 && id.All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-');
 
+    private static readonly string OsToken = OperatingSystem.IsMacOS() ? "macOS" : OperatingSystem.IsLinux() ? "Linux" : "Windows";
+
     public static byte[] BuildSearchRequest(string searchTarget, int mxSeconds = 1)
     {
         var request =
@@ -204,7 +206,7 @@ public static partial class SsdpParser
             "MAN: \"ssdp:discover\"\r\n" +
             $"MX: {Math.Clamp(mxSeconds, 1, 5)}\r\n" +
             $"ST: {searchTarget}\r\n" +
-            "USER-AGENT: Windows UPnP/1.1 SonosDesk/0.1\r\n" +
+            $"USER-AGENT: {OsToken} UPnP/1.1 SonosDesk/0.1\r\n" +
             "\r\n";
         return Encoding.ASCII.GetBytes(request);
     }

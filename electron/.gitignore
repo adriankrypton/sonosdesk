@@ -1,0 +1,11 @@
+node_modules/
+dist/
+# Published SonosDesk.Server (scripts/publish-server.mjs)
+server/
+# Copied by "npm install" (scripts/copy-files.mjs)
+renderer/vendor/
+renderer/i18n/
+renderer/icon.png
+build/
+assets/icon.ico
+assets/icon.png

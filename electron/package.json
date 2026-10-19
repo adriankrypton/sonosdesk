@@ -1,0 +1,107 @@
+{
+  "name": "sonosdesk",
+  "productName": "SonosDesk",
+  "version": "0.1.1-beta.1",
+  "description": "Open-source desktop controller for Sonos speakers (macOS and Windows).",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "adriankrypton and SonosDesk contributors",
+  "homepage": "https://github.com/adriankrypton/sonosdesk",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "prepare": "node scripts/copy-files.mjs all",
+    "copy-i18n": "node scripts/copy-files.mjs i18n",
+    "copy-vendor": "node scripts/copy-files.mjs vendor",
+    "copy-icons": "node scripts/copy-files.mjs icons",
+    "check": "node scripts/check.mjs",
+    "test": "node --test \"test/*.test.*\"",
+    "publish-server": "node scripts/publish-server.mjs",
+    "dist:mac": "electron-builder --mac --x64 --arm64",
+    "dist:win": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "lit-html": "3.3.3"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "io.github.adriankrypton.sonosdesk",
+    "productName": "SonosDesk",
+    "copyright": "Copyright © adriankrypton and SonosDesk contributors",
+    "afterPack": "scripts/after-pack.cjs",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "!renderer/vendor/lit-html/development/**",
+      "!**/*.map",
+      "!**/*.d.ts"
+    ],
+    "extraResources": [
+      {
+        "from": "server/${arch}",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.music",
+      "icon": "build/icon.png",
+      "artifactName": "SonosDesk-${version}-mac-${arch}.${ext}",
+      "identity": null,
+      "hardenedRuntime": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "SonosDesk finds and controls Sonos speakers and AV receivers in your local network.",
+        "LSApplicationCategoryType": "public.app-category.music"
+      }
+    },
+    "dmg": {
+      "title": "SonosDesk ${version}"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "SonosDesk"
+    }
+  }
+}

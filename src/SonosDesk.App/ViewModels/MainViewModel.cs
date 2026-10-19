@@ -20,6 +20,7 @@ public enum AppPage
     Settings,
     GroupComposer,
     Radio,
+    Receiver,
 }
 
 public sealed partial class MainViewModel : ViewModelBase, IDisposable
@@ -37,6 +38,9 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     private readonly StationLogoService _logos;
     private readonly IRadioLogoResolver _logoResolver;
     private readonly IHostNameResolver _hostNames;
+    private readonly IReceiverClient _receiverClient;
+    private readonly IReceiverDiscovery _receiverDiscovery;
+    private readonly ReceiverSyncService _receiverSync;
 
     public MainViewModel(
         ISonosStateService state,
@@ -52,12 +56,18 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         IRadioLogoResolver logoResolver,
         UpdateService updates,
         IHostNameResolver hostNames,
+        IReceiverClient receiverClient,
+        IReceiverDiscovery receiverDiscovery,
+        ReceiverSyncService receiverSync,
         UserNotifier notifier,
         ILogger<MainViewModel> logger)
         : base(notifier, logger)
     {
         Updates = updates;
         _hostNames = hostNames;
+        _receiverClient = receiverClient;
+        _receiverDiscovery = receiverDiscovery;
+        _receiverSync = receiverSync;
         Radio = radio;
         Radio.TargetResolver = PrepareTargetAsync;
         _logos = logos;
@@ -91,6 +101,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         ApplySettingsLists(configuration.Current);
         ApplyDiscoveryStatus(discovery.Status);
         SyncGroups();
+        InitializeReceivers();
     }
 
     public UserNotifier Notifications => Notifier;
@@ -192,11 +203,17 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
             group.RefreshLocalizedTexts();
         }
 
+        foreach (var receiver in Receivers)
+        {
+            receiver.RefreshLocalizedTexts();
+        }
+
         UpdateSelectionMarks();
     }
 
     public void Dispose()
     {
+        DisposeReceivers();
         _ticker.Stop();
         _state.TopologyChanged -= OnTopologyChanged;
         _state.GroupUpdated -= OnGroupUpdated;
@@ -207,16 +224,37 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     // ---- Actions for tray menu and hotkeys (operate on the active group) ----
 
-    public Task TogglePlayPauseActiveAsync() => SelectedGroup?.PlayPauseCommand.ExecuteAsync(null) ?? NoRoomAsync();
+    public Task TogglePlayPauseActiveAsync() =>
+        ActiveReceiver?.PlayPauseAsync() ?? SelectedGroup?.PlayPauseCommand.ExecuteAsync(null) ?? NoRoomAsync();
 
-    public Task NextActiveAsync() => SelectedGroup?.NextCommand.ExecuteAsync(null) ?? NoRoomAsync();
+    // Radio streams on a receiver cannot skip, like radio on Sonos.
+    public Task NextActiveAsync() =>
+        ActiveReceiver is not null ? Task.CompletedTask : SelectedGroup?.NextCommand.ExecuteAsync(null) ?? NoRoomAsync();
 
-    public Task PreviousActiveAsync() => SelectedGroup?.PreviousCommand.ExecuteAsync(null) ?? NoRoomAsync();
+    public Task PreviousActiveAsync() =>
+        ActiveReceiver is not null ? Task.CompletedTask : SelectedGroup?.PreviousCommand.ExecuteAsync(null) ?? NoRoomAsync();
 
-    public Task AdjustActiveVolumeAsync(int direction) =>
-        SelectedGroup?.AdjustVolumeAsync(direction * _configuration.Current.VolumeStep) ?? NoRoomAsync();
+    public Task AdjustActiveVolumeAsync(int direction)
+    {
+        if (ActiveReceiver is { } receiver)
+        {
+            receiver.AdjustVolume(direction * _configuration.Current.VolumeStep);
+            return Task.CompletedTask;
+        }
 
-    public void SelectGroup(GroupViewModel group) => SelectedGroup = group;
+        return SelectedGroup?.AdjustVolumeAsync(direction * _configuration.Current.VolumeStep) ?? NoRoomAsync();
+    }
+
+    public void SelectGroup(GroupViewModel group)
+    {
+        SelectedGroup = group;
+        if (CurrentPage == AppPage.Receiver)
+        {
+            CurrentPage = AppPage.NowPlaying;
+        }
+
+        SyncRoomItemSelection(group);
+    }
 
     partial void OnSelectedGroupChanged(GroupViewModel? value)
     {
@@ -225,6 +263,8 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         RebuildRoomToggles();
         OnQueueTargetChanged(value);
         OnSoundTargetChanged(value);
+        SyncRoomItemSelection(value);
+        RebuildReceiverChips();
         if (!_syncingSelection && value is not null)
         {
             _state.SetActiveRoom(value.CoordinatorRoom);
@@ -233,11 +273,13 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     public void OpenRoom(GroupViewModel group)
     {
+        SelectedReceiver?.SetPageVisible(false);
         _selectedRoomIds.Clear();
         TargetRoomId = null;
         TargetRoomName = null;
         SelectedGroup = group;
         CurrentPage = AppPage.NowPlaying;
+        SyncRoomItemSelection(group);
         UpdateSelectionMarks();
     }
 
@@ -248,9 +290,15 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         DiscoveryText = L.T("main.discovery.searching");
         await RunAsync(async ct =>
         {
+            // Sonos discovery and the count of other UPnP/DLNA devices run side by side.
+            var census = CountNetworkDevicesAsync(ct);
             var result = await _discovery.RefreshAsync(ct);
             await _state.RefreshTopologyAsync(ct);
-            if (result.OnlineDevices > 0)
+            if (await census is { } others)
+            {
+                Notifier.Show(L.F("main.devices_found_census", result.OnlineDevices, others.MediaRenderers, others.OtherUpnpDevices), NotificationSeverity.Success);
+            }
+            else if (result.OnlineDevices > 0)
             {
                 Notifier.Show(L.F("main.devices_found", result.OnlineDevices), NotificationSeverity.Success);
             }
@@ -313,7 +361,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         : RunAsync(
             async ct =>
             {
-                await _quickActions.ApplyVolumeProfileAsync(profile, _state.ActiveRoom, ct);
+                await _quickActions.ApplyVolumeProfileAsync(profile, ActiveReceiver?.Name ?? _state.ActiveRoom, ct);
                 RequestRefreshAll();
             },
             L.F("main.profile_applied", profile.Name));
@@ -671,7 +719,9 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
             DiscoveryPhase.Searching => L.T("main.discovery.searching"),
             DiscoveryPhase.Idle => L.T("main.discovery.starting"),
             DiscoveryPhase.Stopped => L.T("main.discovery.stopped"),
-            _ when status.OnlineDeviceCount > 0 => L.F("main.discovery.online", status.OnlineDeviceCount)
+            _ when status.OnlineDeviceCount > 0 => (_census is { } census
+                    ? L.F("main.discovery.census", status.OnlineDeviceCount, census.MediaRenderers, census.OtherUpnpDevices)
+                    : L.F("main.discovery.online", status.OnlineDeviceCount))
                 + (status.UnreachableDeviceCount > 0 ? L.F("main.discovery.unreachable", status.UnreachableDeviceCount) : string.Empty)
                 + (status.LastCompletedAt is { } at ? $" · {at.ToLocalTime():HH:mm}" : string.Empty),
             _ => L.T("main.discovery.none_found"),
@@ -702,6 +752,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     private void ApplySettingsLists(AppSettings settings)
     {
+        ApplyReceivers(settings);
         ApplyPresets(settings);
         VolumeProfiles.Clear();
         foreach (var profile in settings.VolumeProfiles)

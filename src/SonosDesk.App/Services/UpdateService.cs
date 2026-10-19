@@ -21,7 +21,18 @@ public sealed partial class UpdateService(
     public static Version CurrentVersion { get; } =
         UpdateVersion.Normalize(Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 1, 0));
 
-    public string CurrentVersionText => UpdateVersion.Display(CurrentVersion);
+    // "0.1.1-beta.1" for pre-releases (informational version without the source revision), else "0.1.1".
+    public string CurrentVersionText { get; } = DisplayVersion();
+
+    private static string DisplayVersion()
+    {
+        var informational = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var text = informational?.Split('+')[0].Trim();
+        return text is { Length: > 0 } && UpdateVersion.TryParse(text, out var parsed, out var preRelease) && preRelease
+            && UpdateVersion.Normalize(parsed) == CurrentVersion
+                ? text
+                : UpdateVersion.Display(CurrentVersion);
+    }
 
     public static DateTimeOffset? BuildTime { get; } = ReadBuildTime();
 

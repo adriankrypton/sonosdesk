@@ -1,0 +1,6 @@
+{
+  "radio.menu.rename": "Cambiar nombre …",
+  "radio.rename_station_hint": "El nombre aparece en SonosDesk, en la app de Sonos y en la pantalla del receptor.",
+  "radio.rename_station_title": "Cambiar nombre de la emisora",
+  "radio.renamed": "Nombre cambiado a «{0}»."
+}

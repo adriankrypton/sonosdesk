@@ -57,3 +57,51 @@ jobs:
             artifacts/SonosDesk-win-x64/SonosDesk.exe
             artifacts/installer/*.exe
           retention-days: 14
+
+  electron-macos:
+    # Electron app for macOS (Apple Silicon and Intel) with the .NET server inside; unsigned (ad-hoc).
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: electron/package-lock.json
+
+      - name: Server tests
+        run: dotnet test --project tests/SonosDesk.Server.Tests/SonosDesk.Server.Tests.csproj --configuration Release
+
+      - name: Install
+        working-directory: electron
+        run: npm ci
+
+      - name: Client tests
+        working-directory: electron
+        run: npm test
+
+      - name: Publish server (x64 and arm64)
+        working-directory: electron
+        run: node scripts/publish-server.mjs --platform mac --arch x64,arm64
+
+      - name: Build app
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --mac --x64 --arm64 --publish never
+
+      - name: Upload macOS app
+        uses: actions/upload-artifact@v7
+        with:
+          name: SonosDesk-macos
+          path: |
+            electron/dist/*.dmg
+            electron/dist/*.zip
+          retention-days: 14

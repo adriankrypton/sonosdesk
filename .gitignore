@@ -15,6 +15,14 @@ coverage*/
 *.bak
 *.orig
 desktop.ini
+# Vendor manuals and other local reference material
+Pioneer-VSX-*.md
+docs/vendor/
+# Electron app: dependencies, packaged apps, published server, files copied by "npm install"
+electron/node_modules/
+electron/dist/
+electron/server/
+electron/out/
 # Local signing material (never commit)
 *.pfx
 *.p12

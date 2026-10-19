@@ -48,11 +48,17 @@ public sealed class TrayController : IDisposable
     {
         _tray.DarkMenu = WindowsShell.IsSystemDarkMode();
         var group = _viewModel.SelectedGroup;
+        var receiver = _viewModel.ActiveReceiver;
         var step = _configuration.Current.VolumeStep;
-        var hasGroup = group is not null;
+        var hasGroup = group is not null || receiver is not null;
         var items = new List<TrayMenuItem>();
 
-        if (group is not null)
+        if (receiver is not null)
+        {
+            items.Add(TrayMenuItem.Header(receiver.Name));
+            items.Add(new TrayMenuItem { Text = receiver.Subtitle, IsEnabled = false });
+        }
+        else if (group is not null)
         {
             items.Add(TrayMenuItem.Header(group.Name));
             if (group.DisplayTitle is { } title)
@@ -66,13 +72,18 @@ public sealed class TrayController : IDisposable
         }
 
         items.Add(TrayMenuItem.Separator);
-        items.Add(TrayMenuItem.Action(group?.IsPlaying == true ? L.T("tray.pause") : L.T("tray.play"), () => _ = _viewModel.TogglePlayPauseActiveAsync(), hasGroup));
-        items.Add(TrayMenuItem.Action(L.T("tray.next"), () => _ = _viewModel.NextActiveAsync(), group?.CanSkipNext == true));
-        items.Add(TrayMenuItem.Action(L.T("tray.previous"), () => _ = _viewModel.PreviousActiveAsync(), group?.CanSkipPrevious == true));
+        var playing = receiver?.IsPlaying ?? group?.IsPlaying == true;
+        items.Add(TrayMenuItem.Action(playing ? L.T("tray.pause") : L.T("tray.play"), () => _ = _viewModel.TogglePlayPauseActiveAsync(), receiver?.CanPlay ?? hasGroup));
+        items.Add(TrayMenuItem.Action(L.T("tray.next"), () => _ = _viewModel.NextActiveAsync(), receiver is null && group?.CanSkipNext == true));
+        items.Add(TrayMenuItem.Action(L.T("tray.previous"), () => _ = _viewModel.PreviousActiveAsync(), receiver is null && group?.CanSkipPrevious == true));
         items.Add(TrayMenuItem.Separator);
         items.Add(TrayMenuItem.Action(L.F("tray.volume_up", step), () => _ = _viewModel.AdjustActiveVolumeAsync(+1), hasGroup));
         items.Add(TrayMenuItem.Action(L.F("tray.volume_down", step), () => _ = _viewModel.AdjustActiveVolumeAsync(-1), hasGroup));
-        if (group is not null)
+        if (receiver is not null)
+        {
+            items.Add(TrayMenuItem.Action(receiver.IsMuted ? L.T("tray.unmute") : L.T("tray.mute"), () => receiver.ToggleMuteCommand.Execute(null), receiver.IsOn));
+        }
+        else if (group is not null)
         {
             items.Add(TrayMenuItem.Action(group.IsMuted ? L.T("tray.unmute") : L.T("tray.mute"), () => group.ToggleMuteCommand.Execute(null)));
         }
@@ -81,9 +92,10 @@ public sealed class TrayController : IDisposable
         items.Add(new TrayMenuItem
         {
             Text = L.T("tray.room"),
-            IsEnabled = _viewModel.Groups.Count > 0,
+            IsEnabled = _viewModel.Groups.Count + _viewModel.Receivers.Count > 0,
             Children = _viewModel.Groups
-                .Select(g => new TrayMenuItem { Text = g.Name, IsChecked = ReferenceEquals(g, group), Execute = () => _viewModel.SelectGroup(g) })
+                .Select(g => new TrayMenuItem { Text = g.Name, IsChecked = receiver is null && ReferenceEquals(g, group), Execute = () => _viewModel.SelectGroup(g) })
+                .Concat(_viewModel.Receivers.Select(r => new TrayMenuItem { Text = r.Name, IsChecked = ReferenceEquals(r, receiver), Execute = () => _viewModel.ShowReceiver(r) }))
                 .ToList(),
         });
         items.Add(new TrayMenuItem

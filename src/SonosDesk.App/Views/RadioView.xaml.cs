@@ -44,6 +44,20 @@ public partial class RadioView : UserControl
         }
     }
 
+    private void OnRenameStation(object sender, RoutedEventArgs e)
+    {
+        if (ContextItem<RadioStationViewModel>(sender) is not { IsSaved: true } station)
+        {
+            return;
+        }
+
+        var dialog = new TextPromptDialog(L.T("radio.rename_station_title"), L.T("radio.rename_station_hint"), [], station.Name) { Owner = Window.GetWindow(this) };
+        if (dialog.ShowDialog() == true && dialog.Value.Length > 0)
+        {
+            _ = ViewModel.RenameStationAsync(station, dialog.Value);
+        }
+    }
+
     private void OnRenameFolder(object sender, RoutedEventArgs e)
     {
         if (ContextItem<StationFolderViewModel>(sender) is not { Name: { } name })

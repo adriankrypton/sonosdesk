@@ -10,7 +10,7 @@ public sealed class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var flag = value is true;
+        var flag = value is true || value is int count && count > 0;
         if (parameter is "Invert")
         {
             flag = !flag;

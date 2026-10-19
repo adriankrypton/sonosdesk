@@ -8,6 +8,7 @@ using SonosDesk.Infrastructure.Discovery;
 using SonosDesk.Infrastructure.Networking;
 using SonosDesk.Infrastructure.Persistence;
 using SonosDesk.Infrastructure.Radio;
+using SonosDesk.Infrastructure.Receivers;
 using SonosDesk.Infrastructure.Updates;
 using SonosDesk.Infrastructure.Upnp;
 
@@ -68,6 +69,13 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IStreamUrlResolver, StreamUrlResolver>();
 
         services.AddSingleton<IHostNameResolver, DnsHostNameResolver>();
+
+        // Network AV receivers (Pioneer VSX) and the stream relay that feeds them
+        services.AddSingleton<PioneerIpControl>();
+        services.AddSingleton<IStreamRelay, StreamRelayServer>();
+        services.AddSingleton<IReceiverClient, PioneerReceiverClient>();
+        services.AddSingleton<IReceiverDiscovery, PioneerReceiverDiscovery>();
+        services.AddSingleton<ReceiverSyncService>();
 
         // Update hint (GitHub releases of the repository)
         services.AddSingleton<IUpdateChecker>(sp => new GitHubUpdateChecker(

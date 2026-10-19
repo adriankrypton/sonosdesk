@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Les identifiants ne peuvent pas être enregistrés de façon sécurisée sur ce système (trousseau indisponible).",
+  "server.quick_action_not_found": "Cette action rapide n’existe plus.",
+  "server.name_required": "Veuillez saisir un nom.",
+  "server.station_not_found": "Cette station n’est plus enregistrée dans « Mes stations ».",
+  "server.receiver_not_found": "Ce récepteur n’est plus configuré.",
+  "server.invalid_request": "Requête non valide.",
+  "receiver.relay_not_reached_mac": "« {0} » n’a pas pu récupérer le flux depuis SonosDesk. Autorisez les connexions entrantes pour SonosDesk (Réglages Système → Réseau → Coupe-feu) et l’accès au réseau local (Confidentialité et sécurité)."
+}

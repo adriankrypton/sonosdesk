@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Zugangsdaten können auf diesem System nicht sicher gespeichert werden (Schlüsselbund nicht verfügbar).",
+  "server.quick_action_not_found": "Diese Schnellaktion gibt es nicht mehr.",
+  "server.name_required": "Bitte einen Namen eingeben.",
+  "server.station_not_found": "Dieser Sender ist nicht mehr unter „Meine Sender“ gespeichert.",
+  "server.receiver_not_found": "Dieser Receiver ist nicht mehr eingerichtet.",
+  "server.invalid_request": "Ungültige Anfrage.",
+  "receiver.relay_not_reached_mac": "„{0}“ konnte den Stream nicht von SonosDesk abrufen. Erlaube SonosDesk eingehende Verbindungen (Systemeinstellungen → Netzwerk → Firewall) und den Zugriff auf das lokale Netzwerk (Datenschutz & Sicherheit)."
+}

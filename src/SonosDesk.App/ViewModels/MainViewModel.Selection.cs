@@ -26,7 +26,8 @@ public sealed partial class MainViewModel
     public bool HasSingleRoomTarget => TargetRoomId is not null;
 
     public string? TargetDescription =>
-        HasRoomSelection ? SelectionText
+        ActiveReceiver is { } receiver ? receiver.Name
+        : HasRoomSelection ? SelectionText
         : TargetRoomName is { } room ? L.F("main.target_only", room)
         : SelectedGroup?.Name;
 

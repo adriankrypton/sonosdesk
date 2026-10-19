@@ -1,0 +1,62 @@
+<Window x:Class="SonosDesk.App.Views.AddReceiverDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:SonosDesk.App.Localization"
+        xmlns:views="clr-namespace:SonosDesk.App.Views"
+        Title="{l:T dlg.receiver.title}"
+        Width="460" SizeToContent="Height"
+        ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        FocusManager.FocusedElement="{Binding ElementName=AddressBox}">
+    <StackPanel Margin="24,20,24,20">
+        <TextBlock Text="{l:T dlg.receiver.header}" Style="{DynamicResource SubtitleTextBlockStyle}" FontSize="18" />
+        <TextBlock Margin="0,8,0,16" TextWrapping="Wrap" Style="{StaticResource SettingHintStyle}" FontSize="13"
+                   Text="{l:T dlg.receiver.hint}" />
+
+        <TextBlock Text="{l:T dlg.receiver.manufacturer}" Margin="0,0,0,4" />
+        <ComboBox x:Name="ManufacturerBox" SelectedIndex="0" Margin="0,0,0,12" AutomationProperties.Name="{l:T dlg.receiver.manufacturer}">
+            <ComboBoxItem Content="Pioneer (VSX)" />
+        </ComboBox>
+
+        <TextBlock Text="{l:T dlg.receiver.address}" Margin="0,0,0,4" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="AddressBox" TextChanged="OnAddressChanged" AutomationProperties.Name="{l:T dlg.receiver.address}" />
+            <Button x:Name="SearchButton" Grid.Column="1" Margin="8,0,0,0" Click="OnSearch">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Text="{l:T dlg.receiver.search}" />
+                </StackPanel>
+            </Button>
+        </Grid>
+        <TextBlock x:Name="ValidationText" Margin="0,6,0,0" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{l:T dlg.receiver.example}" />
+
+        <StackPanel x:Name="SearchingPanel" Orientation="Horizontal" Margin="0,12,0,0" Visibility="Collapsed">
+            <views:BusySpinner Width="14" Height="14" Thickness="2" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,8,0" />
+            <TextBlock Text="{l:T dlg.receiver.searching}" FontSize="12" />
+        </StackPanel>
+        <ListBox x:Name="FoundList" Margin="0,12,0,0" MaxHeight="180" Visibility="Collapsed" SelectionChanged="OnFoundSelected">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Margin="2,2">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <Run Text="{Binding Model, Mode=OneWay}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding Host, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="{l:T dlg.speaker.cancel}" MinWidth="100" IsCancel="True" />
+            <Button x:Name="AddButton" Content="{l:T dlg.speaker.add}" MinWidth="120" Margin="8,0,0,0" IsDefault="True" IsEnabled="False"
+                    Style="{DynamicResource AccentButtonStyle}" Click="OnAdd" />
+        </StackPanel>
+    </StackPanel>
+</Window>

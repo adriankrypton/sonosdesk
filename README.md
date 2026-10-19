@@ -5,7 +5,7 @@
 <h1 align="center">SonosDesk</h1>
 
 <p align="center">
-  <b>Control your Sonos speakers from the Windows desktop – right next to the clock.</b><br/>
+  <b>Control your Sonos speakers from the desktop – Windows and Mac, right next to the clock.</b><br/>
   Open source · local control without a cloud account · no telemetry
 </p>
 
@@ -13,6 +13,7 @@
   <a href="https://github.com/adriankrypton/sonosdesk/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/adriankrypton/sonosdesk?label=download&sort=semver"></a>
   <a href="https://github.com/adriankrypton/sonosdesk/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/adriankrypton/sonosdesk/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4">
+  <img alt="macOS 12+" src="https://img.shields.io/badge/macOS-12%2B%20%C2%B7%20Apple%20Silicon%20%26%20Intel-000000">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green"></a>
 </p>
@@ -45,6 +46,17 @@ notification area**, without picking up your phone.
 - [License](#license)
 
 ## Release notes
+
+### 0.1.1 – 19 October 2026 · pre-release
+
+- **SonosDesk for macOS** (Apple Silicon and Intel): new desktop app with the same rooms, now playing, radio,
+  receivers, info dialog and settings, plus a menu bar icon
+- **Pioneer AV receivers (VSX)** work like Sonos rooms: room list, now playing, play/stop, volume 0–100,
+  mute, sound (bass/treble), *My stations*; right-click → *Info*, on/off
+- Internet radio on the receiver; its display shows **"Station - via SonosDesk"**, every 10 s alternating with the song
+- Group the receiver with a Sonos room: it plays the same internet radio station and starts/stops with it
+- Rescan shows the number of Sonos devices, other media players (DMR) and other UPnP devices
+- *My stations* can be renamed and deleted
 
 ### 0.1.0 – 18 October 2026 · first public release
 
@@ -86,6 +98,12 @@ All versions and details: [CHANGELOG.md](CHANGELOG.md) · downloads: [Releases](
 - For radio SonosDesk shows the **song that is currently on air** instead of cryptic stream names
 - Stations you start appear in the official Sonos app as "Station · via SonosDesk"
 
+**AV receivers (Pioneer VSX)**
+- Add a receiver via right-click on the room list; it then works like a Sonos room (play/stop, volume,
+  mute, bass/treble, *My stations*, info)
+- Internet radio through the receiver's network player – the display shows "Station - via SonosDesk"
+- Group it with a Sonos room: the receiver plays along whenever the room plays internet radio
+
 **Windows integration**
 - **Tray icon:** left click opens a compact flyout, right click a full menu – SonosDesk keeps running
   when the window is closed
@@ -106,13 +124,29 @@ Open the [latest release](https://github.com/adriankrypton/sonosdesk/releases/la
 | --- | --- |
 | `SonosDesk-Setup-X.Y.Z-win-x64.exe` | **Recommended.** Installs SonosDesk for your user account (no admin rights), adds a Start menu entry and optionally a desktop icon and "Start with Windows". |
 | `SonosDesk-X.Y.Z-win-x64-portable.exe` | Portable single file – run it from any folder, nothing is installed. |
-| `SHA256SUMS.txt` | Checksums to verify the downloads (`Get-FileHash <file>` in PowerShell). |
+| `SonosDesk-X.Y.Z-mac-arm64.dmg` | **Mac with Apple Silicon** (M1, M2, M3, M4 …). |
+| `SonosDesk-X.Y.Z-mac-x64.dmg` | **Mac with Intel processor.** |
+| `SHA256SUMS.txt`, `SHA256SUMS-macos.txt` | Checksums to verify the downloads (`Get-FileHash <file>` in PowerShell, `shasum -a 256 <file>` on the Mac). |
 
 Requirements: Windows 10 (version 2004 or newer) or Windows 11, 64-bit, and Sonos speakers in the
 same home network (S1 or S2 system). No separate .NET runtime is needed.
 
 > **Windows SmartScreen:** SonosDesk is not code-signed yet, so Windows may show
 > "Windows protected your PC". Click **More info → Run anyway**.
+
+### macOS
+
+Not sure which Mac you have? Apple menu → *About This Mac*: "Chip Apple M…" = Apple Silicon (`arm64`),
+"Processor Intel …" = Intel (`x64`). Requires macOS 12 or newer.
+
+1. Open the `.dmg` and drag **SonosDesk** into **Applications**.
+2. Start SonosDesk. The app is not notarized by Apple yet, so macOS blocks the first start: open
+   **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to SonosDesk.
+   (Alternative in Terminal: `xattr -dr com.apple.quarantine /Applications/SonosDesk.app`.)
+3. Allow **"SonosDesk would like to find devices on your local network"** – without it no speakers are found.
+   Changed later under *System Settings → Privacy & Security → Local Network*.
+
+SonosDesk then lives in the menu bar; closing the window keeps it running. Quit with **⌘Q** or the menu bar icon.
 
 **Updates:** SonosDesk checks for a newer release on start and shows a notice with *Download*, *Later*
 and *Skip this version*. Run the new setup – it updates the existing installation and keeps your
@@ -163,6 +197,10 @@ To end it completely, use **Exit** in the tray menu.
 - Add a speaker by IP address (right-click the room list, or *Settings → Network & discovery*).
 - More help: [docs/discovery.md](docs/discovery.md).
 
+**The receiver does not play a station** – the receiver fetches the stream from SonosDesk on the PC.
+Allow SonosDesk for private networks in the Windows firewall, and enable network control ("Network Standby")
+on the receiver. SonosDesk has to keep running while the receiver plays.
+
 **The media keys control the wrong app** – Windows sends them to the most recently active media app.
 Switch off *Use Windows media keys and media overlay* in the settings if you prefer other apps.
 
@@ -185,6 +223,8 @@ and only connects to the internet for:
 | `*.api.radio-browser.info` | radio directory | used only on the radio page |
 | Radio stream servers | reading the current song of a station (ICY metadata) | yes, in the settings |
 | `api.github.com` | checking for a new release | yes, in the settings |
+| AV receiver → PC (local, random TCP port) | the receiver fetches internet radio streams from SonosDesk | only while a receiver plays a stream |
+| AV receiver, TCP 8102 / 8080 (local) | Pioneer network control and media renderer | only with receivers |
 | `api.sonos.com`, `api.ws.sonos.com` | Sonos Control API, only if you enable the cloud backend | yes |
 
 Settings are stored in `%LOCALAPPDATA%\SonosDesk`; secrets (Control API tokens) are encrypted with
@@ -206,8 +246,11 @@ Current limitations:
 
 ## For developers
 
-SonosDesk is a C# / .NET 10 WPF application (MVVM with CommunityToolkit.Mvvm, Microsoft.Extensions
-DI/logging, xUnit). Building needs Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+SonosDesk is written in C# / .NET 10. On Windows the app is WPF (MVVM with CommunityToolkit.Mvvm,
+Microsoft.Extensions DI/logging, xUnit). On macOS an [Electron](electron/README.md) interface talks to
+`SonosDesk.Server`, a local .NET service that uses the same Core and Infrastructure code
+([API](docs/desktop-api.md)). Building needs the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+(the WPF app needs Windows).
 
 ```powershell
 dotnet restore SonosDesk.sln
@@ -229,8 +272,20 @@ Installer (needs [Inno Setup 7](https://jrsoftware.org/isinfo.php)); publishes t
 | `src/SonosDesk.Infrastructure` | SSDP discovery, UPnP/SOAP, Control API, radio directory, persistence |
 | `src/SonosDesk.Windows` | tray icon, global hotkeys, autostart, DPAPI |
 | `src/SonosDesk.App` | WPF views and view models |
+| `src/SonosDesk.Server` | local REST/WebSocket service for the Electron app (cross-platform) |
+| `electron/` | Electron app for macOS (menu bar, now playing, radio, receivers, settings) |
 | `installer/` | Inno Setup script |
 | `tests/` | deterministic xUnit tests with simulated network responses |
+
+Mac app (on a Mac with .NET 10 SDK and Node.js 22):
+
+```bash
+cd electron
+npm ci
+npm start                                                    # development, starts the server too
+node scripts/publish-server.mjs --platform mac --arch x64,arm64
+npx electron-builder --mac --x64 --arm64 --publish never     # dist/*.dmg and *.zip
+```
 
 **Releases:** CI builds, tests and packages the app and the installer on every push. To publish a
 version, raise `<Version>` in `Directory.Build.props`, add a section to `CHANGELOG.md`, then either push

@@ -30,9 +30,25 @@ public sealed class QuickActionExecutor(
     ISonosControlService control,
     ISonosConfigurationService configuration,
     ILogger<QuickActionExecutor> logger,
-    TimeProvider? timeProvider = null) : IQuickActionExecutor
+    TimeProvider? timeProvider = null,
+    IReceiverClient? receivers = null) : IQuickActionExecutor
 {
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
+
+    // Receivers are addressed by their name like rooms (volume 0–100 like Sonos).
+    private ReceiverConfig? FindReceiver(string? name) =>
+        receivers is null || string.IsNullOrWhiteSpace(name)
+            ? null
+            : configuration.Current.Receivers.FirstOrDefault(r => string.Equals(r.Name, name.Trim(), StringComparison.CurrentCultureIgnoreCase));
+
+    private Task FadeReceiverAsync(ReceiverConfig receiver, int target, TimeSpan duration, CancellationToken ct) => FadeAsync(
+        async c => await receivers!.GetStatusAsync(receiver, c).ConfigureAwait(false) is { VolumeStep: { } step }
+            ? new VolumeState(PioneerProtocol.StepToPercent(step), false)
+            : throw new SonosException(SonosErrorKind.Unreachable, L.F("receiver.unreachable", receiver.Name)),
+        (v, c) => receivers!.SetVolumeStepAsync(receiver, PioneerProtocol.PercentToStep(v), c),
+        target,
+        duration,
+        ct);
 
     public async Task<QuickActionResult> ExecuteAsync(QuickAction action, string? activeRoom, CancellationToken cancellationToken = default)
     {
@@ -102,7 +118,11 @@ public sealed class QuickActionExecutor(
         var fade = TimeSpan.FromMilliseconds(configuration.Current.VolumeFadeMilliseconds);
         var fades = new List<Task>();
 
-        if (profile.ActiveRoomVolume is { } activeVolume)
+        if (profile.ActiveRoomVolume is { } receiverVolume && FindReceiver(activeRoom) is { } activeReceiver)
+        {
+            fades.Add(FadeReceiverAsync(activeReceiver, receiverVolume, fade, cancellationToken));
+        }
+        else if (profile.ActiveRoomVolume is { } activeVolume)
         {
             var group = TopologyResolver.ResolveTargetGroup(topology, activeRoom);
             if (group.VisibleMembers.Count > 1)
@@ -123,6 +143,12 @@ public sealed class QuickActionExecutor(
 
         foreach (var room in profile.Rooms)
         {
+            if (FindReceiver(room.Room) is { } receiver)
+            {
+                fades.Add(FadeReceiverAsync(receiver, room.Volume, fade, cancellationToken));
+                continue;
+            }
+
             var player = TopologyResolver.ResolveRoom(topology, room.Room);
             fades.Add(FadePlayerAsync(player.Id, room.Volume, fade, cancellationToken));
         }
@@ -242,6 +268,12 @@ public sealed class QuickActionExecutor(
 
     private async Task SetVolumeAsync(SonosTopology topology, string? room, bool explicitRoom, int volume, CancellationToken ct)
     {
+        if (FindReceiver(room) is { } receiver)
+        {
+            await receivers!.SetVolumeStepAsync(receiver, PioneerProtocol.PercentToStep(volume), ct).ConfigureAwait(false);
+            return;
+        }
+
         var group = TopologyResolver.ResolveTargetGroup(topology, room);
         if (!explicitRoom && group.VisibleMembers.Count > 1)
         {

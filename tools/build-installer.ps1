@@ -14,6 +14,8 @@
 param(
     # Version of the build; defaults to <Version> in Directory.Build.props.
     [string]$Version,
+    # Shown in the app, e.g. "0.1.1-beta.1" for a pre-release; defaults to -Version.
+    [string]$InformationalVersion,
     [string]$Iscc,
     # Use an existing publish folder instead of publishing again.
     [switch]$SkipPublish,
@@ -38,7 +40,7 @@ try {
         Write-Host "Publishing SonosDesk $Version ..."
         dotnet publish src/SonosDesk.App/SonosDesk.App.csproj --configuration Release --runtime win-x64 --self-contained true `
             -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
-            -p:DebugType=none -p:Version=$Version --output $publishPath
+            -p:DebugType=none -p:Version=$Version "-p:InformationalVersion=$(if ($InformationalVersion) { $InformationalVersion } else { $Version })" --output $publishPath
         if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)." }
     }
     if (-not (Test-Path (Join-Path $publishPath 'SonosDesk.exe'))) { throw "SonosDesk.exe not found in $publishPath." }

@@ -73,6 +73,7 @@ public partial class App : Application
             await discovery.StartAsync();
             await _services.GetRequiredService<ISonosStateService>().StartAsync();
             _services.GetRequiredService<AutomationScheduler>().Start();
+            _services.GetRequiredService<ReceiverSyncService>().Start();
 
             _instanceGuard.ActivationRequested += (_, _) => Dispatcher.BeginInvoke(shell.ShowMainWindow);
 

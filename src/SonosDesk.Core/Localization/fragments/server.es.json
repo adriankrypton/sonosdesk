@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Las credenciales no se pueden guardar de forma segura en este sistema (llavero no disponible).",
+  "server.quick_action_not_found": "Esta acción rápida ya no existe.",
+  "server.name_required": "Introduce un nombre.",
+  "server.station_not_found": "Esta emisora ya no está guardada en «Mis emisoras».",
+  "server.receiver_not_found": "Este receptor ya no está configurado.",
+  "server.invalid_request": "Solicitud no válida.",
+  "receiver.relay_not_reached_mac": "«{0}» no pudo obtener el stream de SonosDesk. Permite conexiones entrantes para SonosDesk (Ajustes del Sistema → Red → Firewall) y el acceso a la red local (Privacidad y seguridad)."
+}

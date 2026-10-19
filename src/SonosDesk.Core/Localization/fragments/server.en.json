@@ -1,0 +1,9 @@
+{
+  "server.secrets_unavailable": "Credentials cannot be stored securely on this system (keychain not available).",
+  "server.quick_action_not_found": "This quick action no longer exists.",
+  "server.name_required": "Please enter a name.",
+  "server.station_not_found": "This station is no longer saved in “My stations”.",
+  "server.receiver_not_found": "This receiver is no longer set up.",
+  "server.invalid_request": "Invalid request.",
+  "receiver.relay_not_reached_mac": "“{0}” could not fetch the stream from SonosDesk. Allow incoming connections for SonosDesk (System Settings → Network → Firewall) and local network access (Privacy & Security)."
+}
