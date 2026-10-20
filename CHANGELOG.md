@@ -3,7 +3,7 @@
 All notable changes to SonosDesk are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 The section of a version is used as the text of its GitHub release.
 
-## [0.1.1] – 2026-10-19 (pre-release)
+## [0.1.1] – 2026-10-20
 
 ### Added
 - **SonosDesk for macOS** (Apple Silicon and Intel, macOS 12 or newer): an Electron app with rooms, now playing,

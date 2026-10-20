@@ -33,7 +33,7 @@ process starts and stops. It reuses `SonosDesk.Core` and `SonosDesk.Infrastructu
 
 ```jsonc
 {
-  "version": "0.1.1-beta.1",
+  "version": "0.1.1",
   "backend": "Lokal (UPnP)",
   "capabilities": ["playback", "seek", "queue", "soundSettings", "sleepTimer", "crossfade", "favorites", "playStreamUrl", "grouping", ...],
   "discovery": DiscoveryDto,

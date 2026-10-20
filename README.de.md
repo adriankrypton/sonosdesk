@@ -49,7 +49,7 @@ lassen sich wie ein Sonos-Raum steuern.
 
 ## Versionshinweise
 
-### 0.1.1 – 19. Oktober 2026 · Vorabversion
+### 0.1.1 – 20. Oktober 2026
 
 - **SonosDesk für den Mac** (Apple Silicon und Intel, ab macOS 12) mit Symbol in der Menüleiste
 - **Pioneer-AV-Receiver (VSX)** funktionieren wie Sonos-Räume: Raumliste, aktuelle Wiedergabe, Abspielen/Stopp,

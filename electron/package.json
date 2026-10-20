@@ -1,7 +1,7 @@
 {
   "name": "sonosdesk",
   "productName": "SonosDesk",
-  "version": "0.1.1-beta.1",
+  "version": "0.1.1",
   "description": "Open-source desktop controller for Sonos speakers (macOS and Windows).",
   "main": "main.js",
   "license": "MIT",

@@ -49,7 +49,7 @@ controlled like a Sonos room, too.
 
 ## Release notes
 
-### 0.1.1 – 19 October 2026 · pre-release
+### 0.1.1 – 20 October 2026
 
 - **SonosDesk for Mac** (Apple Silicon and Intel, macOS 12 or newer) with menu bar icon
 - **Pioneer AV receivers (VSX)** work like Sonos rooms: room list, now playing, play/stop, volume 0–100,
